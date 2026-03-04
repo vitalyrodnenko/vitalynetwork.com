@@ -1,0 +1,20 @@
+{{ define "main" }}
+<div class="container container-narrow">
+    <div class="blog-header">
+        <h1>Blog</h1>
+        <p>Writing about what it takes to move AI from impressive demos to accountable, production-grade systems.</p>
+    </div>
+
+    <div class="article-list">
+        {{ range .Pages.ByDate.Reverse }}
+        <a href="{{ .Permalink }}" class="article-row">
+            <div class="article-date">{{ .Date.Format "Jan 2, 2006" }}</div>
+            <div>
+                <div class="article-title">{{ .Title }}</div>
+                <div class="article-excerpt">{{ .Params.description }}</div>
+            </div>
+        </a>
+        {{ end }}
+    </div>
+</div>
+{{ end }}

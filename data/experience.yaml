@@ -1,0 +1,17 @@
+- dates: "2022 — Present"
+  company: "Amazon"
+  role: "Senior Technical PM · Agentic AI Platforms"
+  description: "Leading the shift from human-operated decision workflows to agent-owned execution. Building an AI-native operating model and scaling agent-first workflows across 20+ organizations."
+  last: false
+
+- dates: "2020 — 2022"
+  company: "Auctane"
+  role: "Senior PM · Platform & Integrations"
+  description: "Owned product strategy for an integrations platform spanning 5+ brands (ShipStation, ShippingEasy). Launched partner integration hub to 200+ global carriers, supporting ~150M shipments/year."
+  last: false
+
+- dates: "2012 — 2021"
+  company: "WPP.Digital"
+  role: "Entrepreneur & Product/Engineering Lead"
+  description: "Built and scaled multi-discipline org to ~60 people. Led e-grocery delivery platform and large-scale omnichannel identity/SSO systems."
+  last: true

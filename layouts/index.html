@@ -1,0 +1,53 @@
+{{ define "main" }}
+<div class="container">
+    <section class="hero">
+        <div class="hero-split">
+            <div class="hero-content">
+                <h1>{{ .Site.Params.hero.headline }}</h1>
+                <p class="hero-desc">{{ .Site.Params.hero.description }}</p>
+                <div class="hero-stats">
+                    {{ range .Site.Params.hero.stats }}
+                    <div>
+                        <div class="stat-val">{{ .value }}</div>
+                        <div class="stat-lbl">{{ .label }}</div>
+                    </div>
+                    {{ end }}
+                </div>
+            </div>
+            <div class="hero-photo">
+                <img src="/images/headshot.jpg" alt="{{ .Site.Params.author }}">
+            </div>
+        </div>
+    </section>
+
+    <section class="practice-section">
+        <div class="section-label">Practice Areas</div>
+        <div class="practice-list">
+            {{ range .Site.Params.practiceAreas }}
+            <div>
+                <h3>{{ .title }}</h3>
+                <p>{{ .description }}</p>
+            </div>
+            {{ end }}
+        </div>
+    </section>
+
+    <section class="home-writing">
+        <div class="section-header section-label">
+            <span>Latest Writing</span>
+            <a href="/blog/" class="view-all">View All →</a>
+        </div>
+        <div class="article-list">
+            {{ range first 3 (where .Site.RegularPages "Section" "blog") }}
+            <a href="{{ .Permalink }}" class="article-row">
+                <div class="article-date">{{ .Date.Format "Jan 2, 2006" }}</div>
+                <div>
+                    <div class="article-title">{{ .Title }}</div>
+                    <div class="article-excerpt">{{ .Params.description }}</div>
+                </div>
+            </a>
+            {{ end }}
+        </div>
+    </section>
+</div>
+{{ end }}

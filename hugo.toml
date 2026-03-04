@@ -1,0 +1,57 @@
+baseURL = "https://vitalynetwork.com"
+languageCode = "en-us"
+title = "Vitaly Rodnenko"
+
+[params]
+  description = "Product leader. Entrepreneur. Builder. 20 years turning complex technology into production systems."
+  author = "Vitaly Rodnenko"
+  email = "vitaly.rodnenko@gmail.com"
+  linkedin = "https://www.linkedin.com/in/vitaly-rodnenko/"
+  calendly = "https://calendly.com/vitalyrodnenko"
+  tagline = "AI · Supply Chain · E-Commerce"
+  image = "/images/headshot.jpg"
+
+[params.hero]
+  headline = "Product leader. Entrepreneur. Builder."
+  description = "20 years in technology. Currently at Amazon, leading AI strategy and science platform development. Previously built and led a 60-person engineering organization, shipping end-to-end systems for 30-minute food delivery. My platforms serve 200K+ customers worldwide."
+
+[[params.hero.stats]]
+  value = "20"
+  label = "Years in Tech"
+
+[[params.hero.stats]]
+  value = "200K+"
+  label = "Users Worldwide"
+
+[[params.hero.stats]]
+  value = "3+"
+  label = "Years AI Leadership"
+
+[[params.practiceAreas]]
+  title = "AI & Agentic Systems"
+  description = "Leading AI cultural change and science platform development at Amazon. Building workflow orchestration for agent-owned execution — from LLM orchestration and evaluation frameworks to production governance. Leading the leaders who drive adoption across the organization."
+
+[[params.practiceAreas]]
+  title = "Supply Chain Optimization"
+  description = "Multi-horizon supply chain modeling — from demand forecasting to \"laws of physics\" optimization (MIP modeling). Building systems that plan long-term, steer mid-term, and execute short-term, balancing strategy and tactics at every horizon. Heavy use of ML, DL/RL, scalable data pipelines, and high-throughput inference."
+
+[[params.practiceAreas]]
+  title = "E-Commerce & Platforms"
+  description = "Built end-to-end IT systems for 30-minute food delivery — mobile, web, ML/AI personalization, backoffice, and integrations. Shipped integration platforms serving 200K+ customers worldwide across 200+ global carriers. Experience spans the full product lifecycle from zero to scale."
+
+[markup.goldmark.renderer]
+  unsafe = true
+
+[markup.tableOfContents]
+  startLevel = 2
+  endLevel = 4
+
+[[menus.main]]
+  name = "Blog"
+  pageRef = "/blog"
+  weight = 10
+
+[[menus.main]]
+  name = "About"
+  pageRef = "/about"
+  weight = 20

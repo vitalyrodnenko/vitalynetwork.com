@@ -1,0 +1,11 @@
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-links">
+            <a href="mailto:{{ .Site.Params.email }}" class="footer-link">Email</a>
+            <a href="{{ .Site.Params.linkedin }}" class="footer-link" target="_blank">LinkedIn</a>
+            <a href="{{ .Site.Params.calendly }}" class="footer-link" target="_blank">Book a Sync</a>
+        </div>
+        <div class="footer-copy">© {{ now.Year }} {{ .Site.Params.author }} · Product leader. Entrepreneur. Builder.
+        </div>
+    </div>
+</footer>

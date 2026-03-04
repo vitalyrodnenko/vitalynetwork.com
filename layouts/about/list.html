@@ -1,0 +1,60 @@
+{{ define "main" }}
+<div class="container">
+    <div class="about-split">
+        <div class="about-sidebar">
+            <div class="about-photo">
+                <img src="/images/headshot.jpg" alt="{{ .Site.Params.author }}">
+            </div>
+            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Austin, TX</div>
+            <div style="font-size: 14px; color: var(--text-secondary);">English · French · Russian</div>
+
+            <div style="margin-top: 32px;">
+                <a href="mailto:{{ .Site.Params.email }}"
+                    style="display: block; font-size: 14px; margin-bottom: 8px;">Email</a>
+                <a href="{{ .Site.Params.linkedin }}"
+                    style="display: block; font-size: 14px; margin-bottom: 8px;">LinkedIn</a>
+                <a href="{{ .Site.Params.calendly }}" style="display: block; font-size: 14px;">Book a Sync</a>
+            </div>
+        </div>
+
+        <div class="about-main">
+            <div class="about-bio">
+                <h1>Biography</h1>
+                {{ .Content }}
+            </div>
+
+            <!-- Hobbies -->
+            <div class="hobbies-section">
+                <div class="section-label">Beyond Work</div>
+                <div class="hobbies-grid">
+                    <div>
+                        <div class="hobby-title">Piano</div>
+                        <div class="hobby-desc">I study and play classical piano. It is an exercise in structure,
+                            discipline, and balancing technical precision with interpretation.</div>
+                    </div>
+                    <div>
+                        <div class="hobby-title">CrossFit</div>
+                        <div class="hobby-desc">Consistent functional training. A physically demanding counterbalance to
+                            mentally intensive systems work.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Experience Timeline -->
+            <div class="exp-list">
+                <div class="section-label" style="margin-bottom: 24px;">Experience</div>
+                {{ range .Site.Data.experience }}
+                <div class="exp-item" {{ if .last }} style="border-bottom: none;" {{ end }}>
+                    <div class="exp-dates">{{ .dates }}</div>
+                    <div>
+                        <div class="exp-company">{{ .company }}</div>
+                        <div class="exp-role">{{ .role }}</div>
+                        <div class="exp-desc">{{ .description }}</div>
+                    </div>
+                </div>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
