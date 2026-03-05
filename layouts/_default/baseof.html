@@ -13,6 +13,9 @@
     {{ partial "footer.html" . }}
     {{ $js := resources.Get "js/main.js" | minify | fingerprint }}
     <script src="{{ $js.RelPermalink }}"></script>
+
+    <!-- Calendly Link Widget Script -->
+    <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
 </body>
 
 </html>

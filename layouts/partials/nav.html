@@ -8,8 +8,8 @@
             {{ range .Site.Menus.main }}
             <a href="{{ .URL }}" class="nav-link{{ if $.IsMenuCurrent " main" . }} active{{ end }}">{{ .Name }}</a>
             {{ end }}
-            <a href="{{ .Site.Params.calendly }}" target="_blank" class="nav-link nav-cta">Book a Sync <span
-                    class="arrow">↗</span></a>
+            <a href="" onclick="Calendly.initPopupWidget({url: '{{ .Site.Params.calendly }}'});return false;"
+                class="nav-link nav-cta">Book a Sync <span class="arrow">↗</span></a>
             <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">◑</button>
         </div>
     </div>

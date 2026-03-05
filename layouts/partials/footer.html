@@ -3,7 +3,8 @@
         <div class="footer-links">
             <a href="mailto:{{ .Site.Params.email }}" class="footer-link">Email</a>
             <a href="{{ .Site.Params.linkedin }}" class="footer-link" target="_blank">LinkedIn</a>
-            <a href="{{ .Site.Params.calendly }}" class="footer-link" target="_blank">Book a Sync</a>
+            <a href="" onclick="Calendly.initPopupWidget({url: '{{ .Site.Params.calendly }}'});return false;"
+                class="footer-link">Book a Sync</a>
         </div>
         <div class="footer-copy">© {{ now.Year }} {{ .Site.Params.author }} · Product leader. Entrepreneur. Builder.
         </div>

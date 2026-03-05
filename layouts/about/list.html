@@ -13,7 +13,8 @@
                     style="display: block; font-size: 14px; margin-bottom: 8px;">Email</a>
                 <a href="{{ .Site.Params.linkedin }}"
                     style="display: block; font-size: 14px; margin-bottom: 8px;">LinkedIn</a>
-                <a href="{{ .Site.Params.calendly }}" style="display: block; font-size: 14px;">Book a Sync</a>
+                <a href="" onclick="Calendly.initPopupWidget({url: '{{ .Site.Params.calendly }}'});return false;"
+                    style="display: block; font-size: 14px;">Book a Sync</a>
             </div>
         </div>
 

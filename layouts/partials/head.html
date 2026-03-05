@@ -41,3 +41,6 @@
 <!-- CSS -->
 {{ $css := resources.Get "css/main.css" | minify | fingerprint }}
 <link rel="stylesheet" href="{{ $css.RelPermalink }}">
+
+<!-- Calendly Link Widget CSS -->
+<link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
