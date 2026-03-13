@@ -3,7 +3,7 @@
     <div class="about-split">
         <div class="about-sidebar">
             <div class="about-photo">
-                <img src="/images/headshot.jpg" alt="{{ .Site.Params.author }}">
+                <img src="/images/headshot.jpg" alt="Portrait of {{ .Site.Params.author }}">
             </div>
             <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Austin, TX</div>
             <div style="font-size: 14px; color: var(--text-secondary);">English · French · Russian</div>
@@ -11,9 +11,9 @@
             <div style="margin-top: 32px;">
                 <a href="mailto:{{ .Site.Params.email }}"
                     style="display: block; font-size: 14px; margin-bottom: 8px;">Email</a>
-                <a href="{{ .Site.Params.linkedin }}"
+                <a href="{{ .Site.Params.linkedin }}" target="_blank" rel="nofollow noopener noreferrer"
                     style="display: block; font-size: 14px; margin-bottom: 8px;">LinkedIn</a>
-                <a href="" onclick="Calendly.initPopupWidget({url: '{{ .Site.Params.calendly }}'});return false;"
+                <a href="" role="button" onclick="Calendly.initPopupWidget({url: '{{ .Site.Params.calendly }}'});return false;"
                     style="display: block; font-size: 14px;">Book a Sync</a>
             </div>
         </div>

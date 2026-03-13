@@ -1,6 +1,7 @@
 baseURL = "https://vitalynetwork.com"
 languageCode = "en-us"
 title = "Vitaly Rodnenko"
+enableRobotsTXT = true
 
 [params]
   description = "Product leader. Entrepreneur. Builder. 20 years turning complex technology into production systems."
