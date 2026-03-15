@@ -47,6 +47,8 @@
   "description": "{{ with .Params.description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}",
   "image": "{{ with .Params.image }}{{ . | absURL }}{{ else }}{{ $.Site.Params.image | absURL }}{{ end }}",
   "datePublished": "{{ .Date.Format "2006-01-02T15:04:05-07:00" }}",
+  "dateModified": "{{ .Lastmod.Format "2006-01-02T15:04:05-07:00" }}",
+  "keywords": {{ with .Params.keywords }}{{ . | jsonify }}{{ else }}{{ .Params.tags | jsonify }}{{ end }},
   "author": {
     "@type": "Person",
     "name": "{{ .Site.Params.author }}",

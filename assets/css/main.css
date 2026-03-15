@@ -423,6 +423,14 @@ a.article-row {
     padding-bottom: 120px;
 }
 
+.post-body img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 32px auto;
+    border-radius: 8px;
+}
+
 .post-body p {
     font-size: 18px;
     line-height: 1.6;
