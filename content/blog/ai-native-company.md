@@ -39,7 +39,7 @@ Fine. Useful. But that is not the kind of change that actually moves the speed o
 
 Because underneath, the company stays the same. The same long approval chains. The same hard walls between functions. The same fragmented data. The same expensive change cycles. The same outdated ownership models. Teams end up owning a piece of work, but not a real outcome.
 
-In that setup, AI does not become a new operating model. It becomes another useful layer sitting inside the old one.
+In that setup, AI becomes another useful layer sitting inside the old one.
 
 That is the core mistake. The old organizational design gets modernized instead of questioned.
 
@@ -51,7 +51,7 @@ There is a dangerous illusion that AI, by itself, will make companies smarter, f
 
 I don't buy that.
 
-If a company has poor data structure, if teams interpret core entities differently, if metrics conflict, if ownership is vague, if the change cycle is heavy and expensive, if support is disconnected from product — AI will not fix any of that. It will simply accelerate it.
+If a company has poor data structure, if teams interpret core entities differently, if metrics conflict, if ownership is vague, if the change cycle is heavy and expensive, if support is disconnected from product — AI will simply accelerate all of that.
 
 This is worth saying plainly: AI is equally good at accelerating order and chaos.
 
@@ -59,9 +59,7 @@ This is worth saying plainly: AI is equally good at accelerating order and chaos
 
 So I would frame the competitive question this way. The next layer of competition will not be defined only by who has access to the best models. Access to comparable capabilities will be widespread. The real difference will come from how well a company redesigns itself around those capabilities.
 
-Not as an external add-on.
-Not as a side experiment.
-But as part of how the company actually works.
+As part of how the company actually works — embedded in the operating model, owned by the teams doing the work.
 
 ---
 
@@ -81,17 +79,15 @@ And that, I think, is one of the most underestimated parts of this whole transit
 
 ## The boundaries between roles will become much less rigid
 
-I don't think roles disappear. But I think they become far more permeable.
+Roles stay. But they become far more permeable.
 
 Engineers will move deeper into product framing because the cost of entering that space drops. Analysts will do work that used to require a separate research function. Product managers will go further into technical and analytical territory than before. Scientists will influence product decisions more directly, not just models and experiments.
 
-This is not a story about everyone doing everything — that's too simplistic. It's a story about the cost of entering adjacent intellectual territory dropping significantly.
+This is a story about the cost of entering adjacent intellectual territory dropping significantly — and "everyone doing everything" is too simplistic a way to put it.
 
 And when that happens, organizations have to be designed differently.
 
-Not around titles.
-Not around neat functional boxes.
-But around domains, outcomes, and the real ability to move a system forward.
+Around domains, outcomes, and the real ability to move a system forward — rather than titles or neat functional boxes.
 
 Teams are still being designed as if the main scarcity is hands-on execution inside narrow roles. In an AI-shaped world, the scarcity shifts. What becomes hard to find is not just execution — it is the ability to hold a domain, understand context, write strong specifications, make trade-offs, and manage a combined system of people and agents.
 
@@ -107,7 +103,7 @@ Not just a product team.
 
 A unit that owns a metric, a feature area, a domain, or a meaningful business outcome end to end.
 
-This matters for one simple reason: AI creates the most value where responsibility is clear and outcomes are measurable. Not in abstract centralized pilots, but in well-defined areas of ownership.
+This matters for one simple reason: AI creates the most value where responsibility is clear and outcomes are measurable — in well-defined areas of ownership, rather than abstract centralized pilots.
 
 In that kind of setup, product leadership likely becomes less of a title and more of a function. Leadership belongs to whoever can hold direction, define intent, understand the customer, navigate trade-offs, and move the domain forward. That person may have different titles in different organizations. The title matters less and less.
 
@@ -119,7 +115,7 @@ What matters is whether someone can truly own a domain where part of the work is
 
 There is a subtle trap here. When people talk about small autonomous teams, they often assume you just need to give teams more freedom. In practice, that almost never works without a strong common foundation underneath.
 
-An AI-native organization cannot run on autonomy alone. It needs a shared structural backbone. I see at least a few things without which everything starts drifting fast.
+An AI-native organization needs more than autonomy. It needs a shared structural backbone. I see at least a few things without which everything starts drifting fast.
 
 ### First: a shared language
 
@@ -159,7 +155,7 @@ I don't believe a company can sustain AI transformation without a managed enviro
 
 Otherwise the usual thing happens. Every team starts stitching together its own little agents and automations. Some are useful. Some run on enthusiasm. Some get abandoned. Some rely on data nobody really understands. Some have no clear owner, no observability, no serious quality control.
 
-That is not a new operating model. That is just a new version of organizational shadow IT.
+That is a new version of organizational shadow IT — and it scales fast.
 
 If a company is serious about AI, it needs to give teams the ability to build agentic workflows in a proper environment — where these systems can be launched, measured, updated, constrained, tested, escalated to humans, rolled back, and managed as part of the company's operating system.
 
@@ -184,7 +180,7 @@ If support keeps living outside the product loop as a secondary service function
 
 I would go further: in an AI-native company, the support loop should be part of the product loop — not something attached to it.
 
-That means the team owns not only how it builds new things, but also how its domain is diagnosed, explained, supported, and improved in operation. Agents are especially useful here. Not as a replacement for people, but as the first intelligent layer around the domain.
+That means the team owns not only how it builds new things, but also how its domain is diagnosed, explained, supported, and improved in operation. Agents are especially useful here as the first intelligent layer around the domain, alongside people rather than replacing them.
 
 If that is done well, support stops being a place where people just clean up problems. It becomes one of the main sources of product knowledge.
 
@@ -194,7 +190,7 @@ If that is done well, support stops being a place where people just clean up pro
 
 Worth stating directly, because otherwise any conversation about AI slips into naive enthusiasm.
 
-The goal is not total automation. That is the wrong goal entirely. The goal is intelligent distribution of autonomy.
+The goal is intelligent distribution of autonomy. Total automation is the wrong frame entirely.
 
 Some processes are excellent candidates for agentic execution.
 Some are better served by AI as a co-pilot.
@@ -216,9 +212,9 @@ An agent may be capable of proposing a change. But can it ship that change to pr
 An agent may be capable of interpreting a metric. But who is accountable if that interpretation is wrong?
 An agent may be capable of handling a ticket. But who owns the consequence of failure?
 
-The real bottleneck will not only be technological. It will be about decision rights, autonomy boundaries, escalation rules, and trust architecture.
+The real bottleneck extends beyond the technological. It will be about decision rights, autonomy boundaries, escalation rules, and trust architecture.
 
-And that is not an engineering topic. That is a management topic.
+That is a management topic.
 
 The boundary has to be defined much more clearly: what agents can do on their own, what they can only recommend, and where a human must remain the final decision point.
 
@@ -234,9 +230,9 @@ Every such workflow needs someone who is genuinely accountable for it. Someone w
 
 Otherwise, the moment something breaks, you get the familiar pattern: everybody used it, nobody owned it.
 
-Agents are not convenient tools. They are managed company assets. They need a purpose, constraints, metrics, lifecycle, control logic, and clear accountability.
+Agents are managed company assets. They need a purpose, constraints, metrics, lifecycle, control logic, and clear accountability.
 
-This is not a small operational detail. This is the difference between a model that scales and one that collapses into noise.
+That is the difference between a model that scales and one that collapses into noise.
 
 ---
 
@@ -268,7 +264,7 @@ That is no longer a technology adoption conversation. It is a company redesign c
 
 ## What I actually believe
 
-I don't think the winners over the next few years will simply be the companies that start using AI earlier. I think the winners will be the companies that redesign themselves earlier for a world where intellectual work is no longer exclusively human.
+The winners over the next few years will be the companies that redesign themselves earlier for a world where intellectual work is no longer exclusively human.
 
 That means engineers building not only products, but the environments in which product teams can move fast.
 Product teams becoming smaller, but more accountable.
