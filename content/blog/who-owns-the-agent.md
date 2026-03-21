@@ -57,6 +57,8 @@ The customer would file a ticket. The team would run the simulation manually —
 
 Nobody declared the agent ready and moved on. Each transition was a decision. Someone looked at the data and said: we're ready.
 
+![Each autonomy transition is a decision after reviewing data — from shadow mode to full autonomy](/images/who-owns-the-agent/transitions-readiness.svg)
+
 1. **Shadow mode** comes first. The agent runs alongside the manual process. Outputs are compared. No action is taken by the agent. This phase tends to get cut. Without it, there's no baseline for calibration.
 2. **Supervised** mode follows. The agent proposes; a human confirms before anything happens.
 3. **Partial autonomy** comes next. The agent handles a portion of the traffic — by action type, by risk level, by scenario.
