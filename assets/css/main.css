@@ -211,7 +211,7 @@ a:hover {
    HERO
    ============================================================ */
 .hero {
-    padding: 100px 0 40px;
+    padding: 72px 0 32px;
 }
 
 .hero-split {
@@ -283,7 +283,7 @@ a:hover {
    PRACTICE AREAS
    ============================================================ */
 .practice-section {
-    padding: 20px 0 100px;
+    padding: 20px 0 72px;
     max-width: 800px;
 }
 
@@ -319,7 +319,7 @@ a:hover {
    LATEST WRITING / ARTICLE LIST
    ============================================================ */
 .home-writing {
-    padding: 80px 0 120px;
+    padding: 56px 0 88px;
 }
 
 .article-list {
@@ -431,7 +431,7 @@ a:hover {
    BLOG INDEX
    ============================================================ */
 .blog-header {
-    padding: 100px 0 60px;
+    padding: 56px 0 40px;
 }
 
 .blog-header h1 {
@@ -451,7 +451,7 @@ a:hover {
    BLOG POST
    ============================================================ */
 .post-header {
-    padding: 100px 0 32px;
+    padding: 56px 0 28px;
     text-align: center;
 }
 
@@ -528,15 +528,29 @@ a:hover {
     margin: 32px 0 12px;
 }
 
-.post-body ul {
-    margin: 0 0 32px 24px;
+.post-body ul,
+.post-body ol {
+    margin: 0 0 32px;
+    padding-left: 0;
+    padding-inline-start: 2.25rem;
     font-size: 18px;
     color: var(--text-secondary);
     line-height: 1.8;
+    list-style-position: outside;
+}
+
+.post-body ol {
+    list-style-type: decimal;
 }
 
 .post-body li {
     margin-bottom: 12px;
+}
+
+.post-body li > ul,
+.post-body li > ol {
+    margin-top: 8px;
+    margin-bottom: 8px;
 }
 
 .pull-quote {
@@ -619,7 +633,7 @@ a:hover {
     display: grid;
     grid-template-columns: 280px 1fr;
     gap: 64px;
-    padding: 100px 0;
+    padding: 64px 0;
     align-items: start;
 }
 
@@ -637,6 +651,10 @@ a:hover {
     height: 100%;
     object-fit: cover;
     display: block;
+}
+
+.about-contact {
+    margin-top: 28px;
 }
 
 .about-bio h1 {
@@ -716,7 +734,7 @@ a:hover {
    FOOTER
    ============================================================ */
 .site-footer {
-    padding: 60px 0;
+    padding: 48px 0;
     border-top: 1px solid var(--border-subtle);
     text-align: center;
 }
@@ -810,7 +828,7 @@ main {
     }
 
     .hero {
-        padding: 60px 0 40px;
+        padding: 40px 0 32px;
     }
 
     .hero h1 {
@@ -851,6 +869,10 @@ main {
         order: -1;
     }
 
+    .home-writing {
+        padding: 48px 0 72px;
+    }
+
     .article-entry {
         grid-template-columns: 1fr;
         gap: 12px;
@@ -862,17 +884,48 @@ main {
         margin-right: 0;
     }
 
+    .blog-header {
+        padding: 28px 0 28px;
+    }
+
+    .post-header {
+        padding: 36px 0 22px;
+    }
+
+    .post-body ul,
+    .post-body ol {
+        padding-inline-start: 2.75rem;
+    }
+
     .about-split {
         grid-template-columns: 1fr;
-        gap: 40px;
-        padding: 60px 0;
+        gap: 28px;
+        padding: 32px 0 56px;
+    }
+
+    .about-sidebar {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
     }
 
     .about-photo {
-        max-width: 100%;
-        aspect-ratio: 4/5;
-        border-radius: 12px;
-        margin: 0;
+        width: 88px;
+        max-width: 88px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        margin: 0 0 14px;
+        border: 2px solid var(--border-subtle);
+        box-shadow: 0 0 0 1px var(--border), 0 4px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    [data-theme="dark"] .about-photo {
+        box-shadow: 0 0 0 1px var(--border), 0 4px 18px rgba(0, 0, 0, 0.35);
+    }
+
+    .about-contact {
+        margin-top: 16px;
     }
 
     .about-bio h1 {
