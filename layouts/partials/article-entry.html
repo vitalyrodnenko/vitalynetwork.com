@@ -1,0 +1,18 @@
+<article class="article-entry">
+    <div class="article-date">
+        {{- if not .Date.IsZero -}}
+        {{ .Date.Format "Jan 2, 2006" }}
+        {{- else -}}
+        Tagged
+        {{- end -}}
+    </div>
+    <div class="article-entry-body">
+        <a href="{{ .Permalink }}" class="article-entry-link">
+            <div class="article-title">{{ if eq .Kind "term" }}{{ replace .Title "-" " " | title }}{{ else }}{{ .Title }}{{ end }}</div>
+            {{ with .Params.description }}
+            <div class="article-excerpt">{{ . }}</div>
+            {{ end }}
+        </a>
+        {{ partial "article-tags.html" (dict "Page" .) }}
+    </div>
+</article>

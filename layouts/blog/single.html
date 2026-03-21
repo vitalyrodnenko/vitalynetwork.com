@@ -9,6 +9,7 @@
             <span>{{ .Date.Format "Jan 2, 2006" }}</span> · <span>{{ math.Round (div (countwords .Content) 200.0) }} Min
                 Read</span>
         </div>
+        {{ partial "article-tags.html" (dict "Page" . "Centered" true) }}
     </div>
 
     <div class="post-body">

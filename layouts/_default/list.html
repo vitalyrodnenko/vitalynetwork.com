@@ -1,9 +1,12 @@
 {{ define "main" }}
 <div class="container container-narrow">
     <div class="blog-header">
-        <h1 style="text-transform: capitalize;">{{ .Title }}</h1>
+        <h1>{{ if eq .Kind "term" }}{{ replace .Title "-" " " | title }}{{ else }}{{ .Title }}{{ end }}</h1>
+        {{ if and (eq .Kind "term") .Params.description }}
+        <p class="blog-header-intro">{{ .Params.description }}</p>
+        {{ end }}
         {{ if .Content }}
-        <div style="font-size: 18px; color: var(--text-secondary); max-width: 500px;">
+        <div class="blog-header-intro">
             {{ .Content }}
         </div>
         {{ end }}
@@ -11,19 +14,7 @@
 
     <div class="article-list">
         {{ range .Pages.ByDate.Reverse }}
-        <a href="{{ .Permalink }}" class="article-row">
-            {{ if not .Date.IsZero }}
-            <div class="article-date">{{ .Date.Format "Jan 2, 2006" }}</div>
-            {{ else }}
-            <div class="article-date">Tagged</div>
-            {{ end }}
-            <div>
-                <div class="article-title">{{ .Title }}</div>
-                {{ with .Params.description }}
-                <div class="article-excerpt">{{ . }}</div>
-                {{ end }}
-            </div>
-        </a>
+        {{ partial "article-entry.html" . }}
         {{ end }}
     </div>
 </div>

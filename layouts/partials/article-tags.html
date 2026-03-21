@@ -1,0 +1,11 @@
+{{ $page := .Page }}
+{{ $centered := default false .Centered }}
+{{ with $page.Params.tags }}
+<ul class="article-tag-list{{ if $centered }} article-tag-list--centered{{ end }}">
+    {{ range . }}
+    <li>
+        <a href="{{ printf "/tags/%s/" (urlize .) | relLangURL }}" class="tag-pill">{{ replace . "-" " " }}</a>
+    </li>
+    {{ end }}
+</ul>
+{{ end }}

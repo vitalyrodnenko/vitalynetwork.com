@@ -7,13 +7,7 @@
 
     <div class="article-list">
         {{ range .Pages.ByDate.Reverse }}
-        <a href="{{ .Permalink }}" class="article-row">
-            <div class="article-date">{{ .Date.Format "Jan 2, 2006" }}</div>
-            <div>
-                <div class="article-title">{{ .Title }}</div>
-                <div class="article-excerpt">{{ .Params.description }}</div>
-            </div>
-        </a>
+        {{ partial "article-entry.html" . }}
         {{ end }}
     </div>
 </div>
