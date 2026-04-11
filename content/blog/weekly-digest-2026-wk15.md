@@ -38,4 +38,4 @@ A proposal from the Kimi Team at Moonshot AI for rethinking how information flow
 
 ## Cloudflare's /crawl Endpoint
 
-Cloudflare launched a /crawl endpoint that parses an entire website and returns the content as HTML, Markdown, or JSON. Primary use cases: powering RAG pipelines, building knowledge bases with current web content, monitoring content across multiple pages. The same company that sells bot protection and DDoS mitigation. <a href="https://developers.cloudflare.com/browser-rendering/quick-actions/crawl-endpoint/" rel="nofollow noindex">Source</a>
+Cloudflare launched a /crawl endpoint that parses an entire website and returns the content as HTML, Markdown, or JSON. Primary use cases: powering RAG pipelines, building knowledge bases with current web content, monitoring content across multiple pages. Same vendor, two roles: Cloudflare is the stack that helps you keep bots and scrapers off your properties, and it is also the one giving you a first-party endpoint to crawl and parse whole sites on demand. <a href="https://developers.cloudflare.com/browser-rendering/quick-actions/crawl-endpoint/" rel="nofollow noindex">Source</a>
