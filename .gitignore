@@ -2,3 +2,9 @@ public/
 resources/
 .hugo_build.lock
 .DS_Store
+.cursor/
+scripts/
+
+# local secrets (weekly digest / social APIs)
+.env
+weekly-digest-creds.env
