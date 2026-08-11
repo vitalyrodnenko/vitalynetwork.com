@@ -7,4 +7,22 @@ scripts/
 
 # local secrets (weekly digest / social APIs)
 .env
+weekly-digest-creds.env# append these lines to the repo .gitignore
+memory/
+index/
+approvals.log.lock
+.env
+
+# creds
 weekly-digest-creds.env
+*creds*.env
+*.env
+
+# openclaw runtime
+DREAMS.md
+HEARTBEAT.md
+IDENTITY.md
+TOOLS.md
+USER.md
+openclaw-workspace-state.json
+memory/
