@@ -56,3 +56,8 @@ enableRobotsTXT = true
   name = "About"
   pageRef = "/about"
   weight = 20
+
+[security]
+  # Hugo >= 0.158 denies text/html content files by default.
+  # Needed for HTML-native posts like /blog/replay-sim-validation.
+  allowContent = ['^text/(html|markdown)$']

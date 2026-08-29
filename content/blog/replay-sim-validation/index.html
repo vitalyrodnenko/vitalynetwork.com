@@ -1,0 +1,622 @@
+---
+title: "Predicting vLLM config changes from request logs"
+date: 2026-08-28
+description: "Changing a serving config is a decision most teams make blind. Two days testing a third option: replay request logs through an offline model of the engine."
+summary: "Changing a serving config is a decision most teams make blind. Two days testing a third option: replay request logs through an offline model of the engine."
+tags: ["llm", "vllm", "inference", "benchmarking"]
+image: "/blog/replay-sim-validation/og-image.png"
+layout: "rsim"
+---
+<div class="rsim">
+<style>
+.rsim{
+  --paper:#F7F8F3; --panel:#FFFFFF; --ink:#1B2128; --muted:#5D6670;
+  --line:#DDE0D6; --grid:#E9EBE1;
+  --sim:#2B5CAD; --real:#1B2128;
+  --pass:#1E7A4B; --passbg:#E7F1EA; --miss:#BE3B2B; --missbg:#F8E9E5;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+}
+.rsim,.rsim *{box-sizing:border-box;margin:0;padding:0}
+.rsim{background:var(--paper);color:var(--ink);font:17px/1.68 var(--serif);padding-bottom:90px}
+.rsim .wrap{max-width:740px;margin:0 auto;padding:0 18px}
+.rsim .wide{max-width:920px;margin:0 auto;padding:0 18px}
+.rsim p{margin:0 0 18px}
+.rsim a{color:var(--sim);text-decoration:underline}
+.rsim a:hover{color:var(--sim)}
+.rsim h1,.rsim h2,.rsim h3,.rsim .eyebrow,.rsim .stamp,.rsim th,.rsim .axis,.rsim .btn,.rsim .runchip{font-family:var(--mono)}
+.rsim h1,.rsim h2,.rsim h3,.rsim h4{font-weight:700;color:var(--ink)}
+.rsim h2{font-size:15px;letter-spacing:.13em;text-transform:uppercase;margin:64px 0 18px;padding-top:16px;border-top:2px solid var(--ink)}
+.rsim h3{font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:26px 0 10px}
+.rsim .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.rsim .small{font-size:13px;color:var(--muted)}
+.rsim .figcap{font-family:var(--mono);font-size:12px;color:var(--muted);margin:8px 0 0}
+
+/* hero */
+.rsim .hero{padding:64px 0 8px}
+@media(max-width:776px){.rsim .hero{padding-left:18px;padding-right:18px}}
+.rsim h1{font-size:clamp(26px,5.6vw,44px);line-height:1.12;letter-spacing:-.015em;text-transform:uppercase;margin:10px 0 18px}
+.rsim .lede{font-size:19px;max-width:640px}
+.rsim .rules{border:1px solid var(--line);background:var(--panel);padding:14px 16px;margin:16px 0 0;font-size:15px}
+.rsim .rules b{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.rsim dl.abstract{display:grid;grid-template-columns:max-content 1fr;gap:10px 18px;border:2px solid var(--ink);background:var(--panel);padding:16px 18px;margin:28px 0 0;font-size:15px}
+.rsim dl.abstract dt{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--sim);padding-top:3px}
+.rsim dl.abstract dd{margin:0;line-height:1.55}
+@media(max-width:540px){.rsim dl.abstract{grid-template-columns:1fr;gap:2px 0}.rsim dl.abstract dd{margin-bottom:8px}}
+
+/* trajectory strip */
+.rsim .traj{display:flex;gap:6px;align-items:flex-end;margin:30px 0 6px;height:96px}
+.rsim .tbar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px}
+.rsim .tbar .col{width:100%;background:var(--missbg);border:1px solid var(--miss);position:relative}
+.rsim .tbar .fill{position:absolute;left:0;right:0;bottom:0;background:var(--pass);opacity:.85}
+.rsim .tbar .lab{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.rsim .tbar.gap .col{border-style:dashed;border-color:var(--line);background:transparent}
+@media(max-width:600px){.rsim .traj{overflow-x:auto;padding-bottom:6px}.rsim .tbar{min-width:66px}}
+
+/* run ledger */
+.rsim .ledger{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+.rsim .runchip{border:2px solid var(--ink);background:var(--panel);padding:8px 12px;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.04em}
+.rsim .runchip .sub{display:block;font-weight:400;font-size:10px;color:var(--muted);letter-spacing:.08em}
+.rsim .runchip[aria-selected="true"]{background:var(--ink);color:#fff}
+.rsim .runchip[aria-selected="true"] .sub{color:#B9C0C9}
+.rsim .runchip:focus-visible{outline:3px solid var(--sim);outline-offset:2px;border-radius:0}
+.rsim .runcard{border:1px solid var(--line);border-left:5px solid var(--ink);background:var(--panel);padding:18px 20px;position:relative;min-height:150px}
+.rsim .runcard .stamp{position:absolute;top:14px;right:16px;transform:rotate(-5deg);border:2.5px solid;padding:3px 9px;font-size:11px;font-weight:700;letter-spacing:.12em}
+.rsim .stamp.ok{color:var(--pass);border-color:var(--pass)}
+.rsim .stamp.bad{color:var(--miss);border-color:var(--miss)}
+.rsim .stamp.mix{color:#8A6D1D;border-color:#8A6D1D}
+.rsim .runcard h3{margin-top:2px;max-width:75%}
+.rsim .kv{font-family:var(--mono);font-size:12.5px;margin:0 0 10px;color:var(--muted)}
+.rsim .kv b{color:var(--ink)}
+.rsim .runcard p{font-size:15.5px;margin-bottom:8px}
+
+/* funerals */
+.rsim .funerals{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:18px 0}
+.rsim .fun{border:1px solid var(--line);background:var(--panel);padding:14px 16px}
+.rsim .fun .eyebrow{color:var(--miss)}
+.rsim .fun h3{margin:6px 0 8px;font-size:12.5px}
+.rsim .fun p{font-size:14px;margin:0}
+
+/* figures */
+.rsim .fig{border:1px solid var(--line);background:var(--panel);padding:16px;margin:20px 0}
+.rsim svg text{font-family:var(--mono)}
+.rsim .tip{position:fixed;pointer-events:none;background:var(--ink);color:#fff;font:12px var(--mono);padding:5px 8px;border-radius:2px;opacity:0;transition:opacity .12s;z-index:200;white-space:nowrap}
+
+/* tables */
+.rsim table{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:12.5px;background:var(--panel)}
+.rsim th{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.rsim th,.rsim td{border:1px solid var(--line);padding:6px 8px;text-align:right;white-space:nowrap}
+.rsim th:first-child,.rsim td:first-child{text-align:left}
+.rsim td.p{background:var(--passbg);color:var(--pass);font-weight:700}
+.rsim td.m{background:var(--missbg);color:var(--miss);font-weight:700}
+.rsim td.z{color:var(--muted)}
+.rsim .scroll{overflow-x:auto}
+.rsim .btns{display:flex;gap:6px;margin:0 0 10px}
+.rsim .btn{border:2px solid var(--ink);background:var(--panel);padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.05em;color:var(--ink)}
+.rsim .btn[aria-pressed="true"]{background:var(--ink);color:#fff}
+.rsim .btn:focus-visible{outline:3px solid var(--sim);outline-offset:2px;border-radius:0}
+.rsim .note{border-left:4px solid var(--sim);background:var(--panel);padding:12px 16px;margin:18px 0;font-size:15px}
+.rsim .note.warn{border-left-color:var(--miss)}
+/* ---- explainer ---- */
+.rsim .anat{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap;margin:18px 0}
+.rsim .anat .box{border:2px solid var(--ink);background:var(--panel);padding:12px 14px;flex:1;min-width:200px}
+.rsim .anat .box h4{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 8px}
+.rsim .anat .box p{font-size:13.5px;margin:0 0 6px;line-height:1.5}
+.rsim .anat .arrow{align-self:center;font-family:var(--mono);font-size:20px;color:var(--muted)}
+.rsim .lane{border:1px dashed var(--line);padding:8px 10px;margin:6px 0;font-size:13px}
+.rsim .lane b{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase}
+.rsim .memgrid{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;margin-top:8px}
+.rsim .cell{aspect-ratio:1;border:1px solid var(--line);background:#F1F2EB}
+.rsim .cell.w{background:var(--ink)}
+.rsim .cell.pfx{background:var(--sim)}
+.rsim .cell.hist{background:#3E8E63}
+.rsim .cell.junk{background:repeating-linear-gradient(45deg,#C9CCC1 0 3px,#F1F2EB 3px 6px)}
+.rsim .cell.uni{background:#B9BDB2}
+.rsim .cell.evict{background:var(--missbg);border-color:var(--miss)}
+.rsim .legend{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:10px}
+.rsim .legend span{display:inline-flex;align-items:center;gap:5px}
+.rsim .legend i{width:12px;height:12px;display:inline-block;border:1px solid var(--line)}
+.rsim .axes{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px;margin:18px 0}
+.rsim .axes .ax{border:1px solid var(--line);background:var(--panel);padding:12px 14px}
+.rsim .axes .ax b{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:6px}
+.rsim .axes .ax p{font-size:13.5px;margin:0}
+.rsim .axes .ax .cfg{font-family:var(--mono);font-size:11px;color:var(--sim);display:block;margin-top:8px}
+.rsim .loopstrip{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.rsim .loopstrip .st{flex:1;min-width:150px;border:1px solid var(--line);background:var(--panel);padding:10px 12px;font-size:13px}
+.rsim .loopstrip .st b{font-family:var(--mono);font-size:11px;letter-spacing:.08em;display:block;color:var(--sim);margin-bottom:4px}
+.rsim dl.gloss{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;font-size:14px;border:1px solid var(--line);background:var(--panel);padding:14px 16px}
+.rsim dl.gloss dt{font-family:var(--mono);font-size:12px;font-weight:700;padding-top:2px}
+.rsim dl.gloss dd{margin:0}
+/* toy demo */
+.rsim .demo{border:1px solid var(--line);background:var(--panel);padding:16px;margin:20px 0}
+.rsim .demo .pool{display:grid;grid-template-columns:repeat(16,1fr);gap:3px;margin:12px 0}
+.rsim .demo .pool .cell{aspect-ratio:1}
+.rsim .demolog{font:12px/1.7 var(--mono);background:#F2F3EC;border:1px solid var(--line);padding:10px 12px;height:150px;overflow-y:auto;margin-top:10px}
+.rsim .demolog .hit{color:var(--pass)}
+.rsim .demolog .ev{color:var(--miss)}
+.rsim .stats{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px;margin-top:10px}
+.rsim .stats b{font-size:17px;display:block}
+.rsim footer{margin-top:70px;border-top:2px solid var(--ink);padding-top:14px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+@media(max-width:600px){.rsim .runcard h3{max-width:100%}.rsim .runcard .stamp{position:static;display:inline-block;transform:none;margin-bottom:8px}}
+</style>
+<div class="tip" id="tip"></div>
+
+<header class="hero wrap">
+  <div class="eyebrow">Validation log · 27–28 Aug 2026 · 2 × RTX 4090 · Qwen3-32B-AWQ · vLLM 0.28</div>
+  <h1>Predicting vLLM config changes from request logs</h1>
+  <p class="lede">Changing a production serving config is a decision most teams still make blind: try it on live traffic and watch what breaks, or leave a working config alone and pay for the headroom. Over two days I tested a third option: replay request logs through an offline model of the engine and ask it what a change will do before anything touches the cluster. This page is the full log of that test, including every prediction that turned out wrong.</p>
+
+  <dl class="abstract">
+    <dt>Goal</dt><dd>Find out whether a config change's effect on cost and latency can be predicted from request logs alone, accurately enough to act on. And where prediction breaks, find out exactly why.</dd>
+    <dt>Method</dt><dd>Replay a fixed workload through a calibrated model of vLLM. Predict configs the model has never seen, commit the predictions to git, then run them for real. Seven rounds, eleven configurations, seven of them held out.</dd>
+    <dt>Result</dt><dd>Cost and cache efficiency: predictable within a few percent, zero misses across every held-out config. The first-token latency tail: resisted every fix for four rounds.</dd>
+    <dt>Diagnosis</dt><dd>Per-request forensics traced the entire tail residual to one small group of requests and two specific causes. Both are understood; neither is fixed yet.</dd>
+    <dt>Takeaway</dt><dd>The physics model was never the problem. The harness that measured its coefficients was, three separate times. Calibrate on the exact path your traffic takes.</dd>
+  </dl>
+
+  <div class="rules"><b>Rules of the game.</b> Every prediction is committed to git before the real measurement runs. Held-out configs are predicted blind. Hypotheses are pre-registered with numeric thresholds, and every wrong one is reported as wrong. The bar: predicted relative change within 15 points of measured, per metric.</div>
+
+  <div class="traj" id="traj" role="img" aria-label="Held-out accuracy by run: 1 of 11, 9 of 12, 10 of 12, no held-out in run 4, 11 of 12, 5 of 6, 5 of 6"></div>
+  <div class="figcap">Held-out rows within the bar, by run. Run 4 was a re-prediction with no held-out configs.</div>
+</header>
+
+<div>
+<section class="wrap">
+  <h2>The setup</h2>
+  <p>Every team serving open models in production faces the same decision problem. The serving stack has a dozen consequential knobs: how much memory the cache gets, whether prefixes are reused, how many requests run at once, how big a chunk of prompt one step may process. Each knob moves cost and latency, sometimes by a factor of two. And the only trustworthy way to learn what a knob does is to turn it on production traffic, because a staging cluster at production scale doubles the GPU bill and a smaller one lies about contention. So most configs are set once, by folklore and defaults, and then left alone while the headroom quietly costs money.</p>
+  <p>The experiment's goal: determine whether an offline replay of request logs can stand in for the production experiment. Concretely, whether a simulator can predict the effect of a config change it has never seen, on every metric an operator cares about, within 15 points of the measured change. And where it cannot, the goal is a named mechanism: which requests are mis-priced, and why. A predictor earns trust once its failure modes have names.</p>
+  <p>The simulator is a discrete-event model of the engine in a few hundred lines of Python: chunked prefill under a token budget, continuous batching, paged KV blocks, a refcounted prefix cache, preemption by recompute. Step time is a calibrated linear model with four coefficients. The workload is a deterministic agentic trace: 192 requests, 24 sessions, a shared 1,200-word system prompt, histories growing over eight turns. The same trace replays against the simulator and against a live server (Qwen3-32B-AWQ on two RTX 4090s, tensor parallel 2, vLLM 0.28).</p>
+</section>
+
+<section class="wide" id="machinery">
+  <h2>The machinery, in plain terms</h2>
+  <p class="wrap" style="max-width:740px;margin-left:0">If you have never looked inside an LLM serving engine, this section is enough to follow everything below. Readers who live in vLLM internals can skip to the run ledger.</p>
+
+  <div class="anat">
+    <div class="box">
+      <h4>Requests arrive</h4>
+      <p>Each request is a prompt (often thousands of tokens: a system prompt, tools, chat history) plus a reply to generate.</p>
+      <p>In agent workloads most of the prompt repeats: every request in a session starts with the same system prompt and the same growing history.</p>
+    </div>
+    <div class="arrow" aria-hidden="true">&#9656;</div>
+    <div class="box">
+      <h4>The engine loop</h4>
+      <div class="lane"><b>Prefill</b> reads the whole prompt once and writes its intermediate state into memory. Cost grows with prompt length. This is where time-to-first-token is made.</div>
+      <div class="lane"><b>Decode</b> then generates the reply one token per step, re-reading that state each step. Many requests share each step (continuous batching).</div>
+    </div>
+    <div class="arrow" aria-hidden="true">&#9656;</div>
+    <div class="box">
+      <h4>GPU memory</h4>
+      <p>The saved state is the <b>KV cache</b>. It lives in fixed-size <b>blocks</b> (16 tokens each) in a pool that shares the GPU with model weights.</p>
+      <div class="memgrid" aria-hidden="true">
+        <div class="cell w"></div><div class="cell w"></div><div class="cell w"></div><div class="cell pfx"></div><div class="cell pfx"></div><div class="cell pfx"></div><div class="cell hist"></div><div class="cell hist"></div><div class="cell uni"></div><div class="cell junk"></div>
+        <div class="cell w"></div><div class="cell w"></div><div class="cell w"></div><div class="cell pfx"></div><div class="cell pfx"></div><div class="cell hist"></div><div class="cell hist"></div><div class="cell uni"></div><div class="cell junk"></div><div class="cell"></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--ink)"></i>weights</span>
+        <span><i style="background:var(--sim)"></i>shared prefix</span>
+        <span><i style="background:#3E8E63"></i>session history</span>
+        <span><i style="background:#B9BDB2"></i>unique</span>
+        <span><i class="cell junk" style="aspect-ratio:auto"></i>generated</span>
+        <span><i></i>free</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="wrap" style="max-width:740px;margin-left:0">The trick that makes agent serving affordable is the <b>prefix cache</b>: if a new request starts with token-for-token the same content as blocks already in memory, the engine reuses those blocks instead of recomputing them. A cached system prompt means a request pays prefill only for what is new. But cached blocks occupy the same pool that active requests need, so when memory runs short the engine <b>evicts</b> cold blocks, and an evicted prefix must be recomputed by whoever needs it next. Every axis of this experiment pushes on that trade somewhere.</p>
+
+  <h3>What a config change actually turns</h3>
+  <div class="axes">
+    <div class="ax"><b>Pool size</b><p>How much GPU memory the KV pool gets. Bigger pool: more cached prefixes survive. Smaller: eviction, recompute, queueing.</p><span class="cfg">configs C, E, K, F, J, A, H</span></div>
+    <div class="ax"><b>Prefix caching on/off</b><p>Turning reuse off entirely: every request pays full prefill. The most expensive switch in this workload.</p><span class="cfg">config B (throughput fell by half)</span></div>
+    <div class="ax"><b>Concurrency cap</b><p>How many requests may decode at once. Predicted, correctly, to change nothing at this load.</p><span class="cfg">config D</span></div>
+    <div class="ax"><b>Prefill chunk budget</b><p>How many prompt tokens one engine step may chew. Bigger chunks: fewer, longer steps.</p><span class="cfg">config G</span></div>
+    <div class="ax"><b>Axes crossed</b><p>Tight pool and big chunks together, built as a worst case. It passed; the quiet configs failed.</p><span class="cfg">config I</span></div>
+  </div>
+
+  <h3>How the simulator fits in</h3>
+  <div class="loopstrip">
+    <div class="st"><b>1 · collect</b>A week of request logs: arrival times, prompt structure, output lengths. No model weights needed.</div>
+    <div class="st"><b>2 · calibrate</b>Measure four cost coefficients on the live server: fixed step cost, per-prefill-token, per-decoding-sequence, per-KV-token-read.</div>
+    <div class="st"><b>3 · predict</b>Replay the logs through a model of the engine (batching, blocks, cache, eviction, preemption) under the changed config. Commit the prediction to git.</div>
+    <div class="st"><b>4 · verify</b>Run the config for real. Compare. Report every miss and every dead hypothesis.</div>
+  </div>
+  <p class="wrap" style="max-width:740px;margin-left:0">The simulator never runs the model itself. It plays through the engine's bookkeeping and charges each step from the calibrated price list, which is why a full config comparison takes seconds on a laptop instead of GPU-hours.</p>
+
+  <h3>Try the trade yourself</h3>
+  <p class="wrap" style="max-width:740px;margin-left:0">A toy version of the block pool, deliberately tiny: four sessions, three turns each, arrivals interleaved. Shared prefix in blue, each session's history in green, generated tokens as stripes. Run it with a large pool, then a small one, and watch what eviction does to later turns. The pool axis of the experiment, and the "eviction cliff" the forensics section ends with, are this mechanism at production scale.</p>
+  <div class="demo">
+    <div class="btns" role="group" aria-label="Demo controls">
+      <button class="btn" id="dPoolL" aria-pressed="true">large pool (64)</button>
+      <button class="btn" id="dPoolS" aria-pressed="false">small pool (32)</button>
+      <button class="btn" id="dPlay">play</button>
+      <button class="btn" id="dStep">step</button>
+      <button class="btn" id="dReset">reset</button>
+    </div>
+    <div class="pool" id="dPool" aria-label="Block pool visualization"></div>
+    <div class="stats">
+      <span>prefix reuse<b id="dHit">0%</b></span>
+      <span>evicted blocks<b id="dEv">0</b></span>
+      <span>recomputed tokens<b id="dRe">0</b></span>
+      <span>requests served<b id="dReq">0 / 12</b></span>
+    </div>
+    <div class="demolog" id="dLog" aria-live="polite"></div>
+  </div>
+
+  <h3>Small glossary</h3>
+  <dl class="gloss">
+    <dt>TTFT</dt><dd>Time to first token: how long a request waits before the reply starts. Its p95 is the "first-token tail" this log keeps fighting.</dd>
+    <dt>p95</dt><dd>The value the slowest 5% of requests exceed. Tails, not averages, are what SLOs are written against.</dd>
+    <dt>KV cache</dt><dd>The saved attention state of processed tokens. Re-read on every decode step, so it is the memory that costs money.</dd>
+    <dt>block</dt><dd>A 16-token page of KV cache. The pool is counted in blocks; the whole experiment varies that count.</dd>
+    <dt>prefix cache</dt><dd>Reuse of blocks whose content exactly matches a new request's beginning. Hit rate = share of prompt tokens served from cache.</dd>
+    <dt>eviction</dt><dd>Dropping cold cached blocks when the pool runs short. The evicted content is recomputed on next use.</dd>
+    <dt>preemption</dt><dd>Pausing a running request and recomputing it later because memory ran out mid-generation.</dd>
+  </dl>
+</section>
+
+<section class="wide">
+  <h2>The run ledger</h2>
+  <p class="wrap" style="max-width:740px;margin-left:0">Each run changed one thing and pre-registered what should happen. Select a run.</p>
+  <div class="ledger" role="tablist" id="ledger"></div>
+  <div class="runcard" id="runcard" role="tabpanel"></div>
+</section>
+
+<section class="wrap">
+  <h2>Three hypotheses, three funerals</h2>
+  <p>The fixes mattered less than the funerals. Each dead hypothesis was replaced by a measurement, and the measurement pointed somewhere no one was looking.</p>
+  <div class="funerals">
+    <div class="fun"><span class="eyebrow">Falsified · run 3</span>
+      <h3>"The missing context term explains the e2e gap"</h3>
+      <p>Recovering c_kv bought 1.0 point of an expected 20+. The real cause: a constant 5.6 ± 0.4 ms per decode step, invariant across pools and prefill budgets. Constants do not come from mis-fitted coefficients.</p></div>
+    <div class="fun"><span class="eyebrow">Falsified · run 5</span>
+      <h3>"Queue build-up behind long prefill steps"</h3>
+      <p>Tested with a config built to maximize it: 8,192-token prefill budget crossed with a tight pool. The config built to fail passed at −10.6%. Two quiet configs kept failing. Wrong hypothesis, by its own test.</p></div>
+    <div class="fun"><span class="eyebrow">Falsified · run 7</span>
+      <h3>"Eviction order causes the tail overshoot"</h3>
+      <p>Leaf-first eviction reached the cache measurably (hit rate exact to three decimals on half the set) and never reached the tail: four configs bit-identical under two opposed cache changes. The tail is not a cache phenomenon.</p></div>
+  </div>
+  <div class="note">The pattern across all three: the step model survived seven rounds unchanged in form. What kept failing was the harness measuring its coefficients: a grid that could not identify a term, a constant fitted on the offline path while the benchmark measured the online server, a subtraction whose error bar buried the signal it was extracting.</div>
+</section>
+
+<section class="wide">
+  <h2>What got solved: cost</h2>
+  <p class="wrap" style="max-width:740px;margin-left:0">Seven held-out configurations across five axes: pool size, scheduler limits, prefill granularity, and axes crossed. Zero cost misses in the series. The chart below is the cache model against reality across every pool size tested; hover the points.</p>
+  <div class="fig"><div id="hitchart"></div>
+    <div class="figcap">Prefix-cache hit rate vs KV pool size. Blue = simulator, black = engine. Starred configs were held out when first measured. Run 1's version of this model predicted the wrong sign.</div>
+  </div>
+  <div class="fig scroll">
+    <table aria-label="Cost scorecard">
+      <thead><tr><th>config</th><th>axis</th><th>throughput sim/real</th><th>err</th><th>hit-rate gap</th></tr></thead>
+      <tbody id="costbody"></tbody>
+    </table>
+    <div class="figcap">Cost scorecard after run 7. Every cost gap ≤ 2.8 pt against a 15-point bar. gpu-seconds per 1k tokens (not shown) within 5.5% everywhere.</div>
+  </div>
+</section>
+
+<section class="wide">
+  <h2>What resisted: the first-token tail</h2>
+  <p class="wrap" style="max-width:740px;margin-left:0">One metric carried every remaining miss. Toggle the simulator version: two opposed cache changes between v0.5 and v0.7, and the failing rows do not move.</p>
+  <div class="fig">
+    <div class="btns" id="verbtns" role="group" aria-label="Simulator version">
+      <button class="btn" data-v="0" aria-pressed="false">v0.5</button>
+      <button class="btn" data-v="1" aria-pressed="true">v0.6</button>
+      <button class="btn" data-v="2" aria-pressed="false">v0.7</button>
+    </div>
+    <div class="scroll"><table aria-label="ttft p95 absolute error by simulator version">
+      <thead><tr><th>config</th><th>real ttft p95</th><th>abs error</th><th>moved vs prev</th></tr></thead>
+      <tbody id="ttftbody"></tbody>
+    </table></div>
+    <div class="figcap">ttft_p95 absolute prediction error. Rows marked "bit-identical" did not change by a single bit across versions.</div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>The forensics</h2>
+  <p>After run 7 the right move was to stop changing physics and look at individual requests. Per-request instrumentation on the four resistant configs answered the first question immediately: the top-5% slow sets match between simulator and engine, 9 of 9 exactly on config K. Same requests, wrong price. A magnitude problem, not a missing scheduling mechanism.</p>
+  <p>Then the residual collapsed onto a single cohort that identified itself with a number. Every mis-predicted request had its prefix match capped at exactly 1,200 tokens, and the trace's sessions share exactly 1,200 words of system prompt before diverging. These were requests that matched the shared prefix and nothing else. Everything outside the cohort was accurate to within 14 milliseconds.</p>
+  <div class="fig scroll">
+    <table aria-label="Mean ttft error by turn">
+      <thead><tr><th>mean ttft err (s), by turn</th><th>F</th><th>J</th><th>K</th><th>H</th></tr></thead>
+      <tbody id="turnbody"></tbody>
+    </table>
+    <div class="figcap">The error is bimodal in every cut: turn 0 (cold start) and the last turns (eviction cliff). Turns 2–5 are accurate to within 20 ms. H, the config that never moved, has clean late turns: its entire residual is the cold-start component.</div>
+  </div>
+  <div class="funerals">
+    <div class="fun"><span class="eyebrow" style="color:var(--sim)">Cause 1 · pool-independent</span>
+      <h3>Cold start</h3>
+      <p>Turn-0 requests legitimately match only the shared prompt. The simulator over-charges their cold prefill by a flat 0.13–0.17 s at every pool size. This is the whole of config H's failure, the row that was bit-identical across three versions.</p></div>
+    <div class="fun"><span class="eyebrow" style="color:var(--sim)">Cause 2 · pool-dependent</span>
+      <h3>Eviction cliff</h3>
+      <p>Later-turn requests that should match their session history fall back to 1,200: the simulator evicts inter-turn history more aggressively than the engine. The count is perfectly monotonic in pool size: 0, 4, 11, 14 requests at 5,811 → 4,246 blocks.</p></div>
+  </div>
+  <div class="note warn">One finding I would rather not have: re-measuring config J's first-token tail gave a value 18% away from the canonical run, while its throughput, hit rate and e2e reproduced to 0.14%. One recorded FAIL would have been a PASS against the re-run. The verdicts stand as published. The lesson is about the instrument: sub-second p95 on 182 requests is noisy, and any tool that reports such tails without repeated measurement is reporting noise with confidence.</div>
+</section>
+
+<section class="wrap">
+  <h2>Methods, and the criterion</h2>
+  <p>Two things kept this honest. First, the freeze: predictions committed before measurements, superseded exactly once with the reason recorded, absolute afterwards. Run 4 re-predicted against already-seen measurements and says so in its own header, because it tested three pre-registered hypotheses and nothing else. Second, the criterion: the original 15-point relative bar amplifies sub-second baseline errors into hundred-point gaps, so a v2 criterion (relative gap or absolute error within 15%) was adopted in writing between rounds, prospective only. The whole series scores under both:</p>
+  <div class="fig scroll">
+    <table aria-label="Series under both criteria">
+      <thead><tr><th>run</th><th>sim</th><th>rows</th><th>v1</th><th>v2</th><th>held-out</th><th>v1</th><th>v2</th></tr></thead>
+      <tbody id="seriesbody"></tbody>
+    </table>
+    <div class="figcap">v2 reshapes the bar without softening it: run 1 fails 1/11 under both criteria. Thousand-point gaps on tiny baselines pass once the absolute prediction is good, and genuine misses keep failing.</div>
+  </div>
+  <p>The meta-lesson, which I now believe generalizes: the serving physics was the easy part. A linear step model with four coefficients survived seven rounds. If you build anything that predicts serving behavior, calibrate on the exact path your traffic takes, at the concurrency it takes it, and treat your calibration harness as the component most likely to be wrong.</p>
+  <p>The eviction-retention fix and the cold-start term are next. If you run vLLM in production and the shape of this problem looks familiar, I want to compare notes.</p>
+</section>
+</div>
+
+<footer class="wrap">
+  replay-sim · simulator, per-run reports and the git history with frozen predictions: <a href="https://github.com/vitalyrodnenko/replay-sim">github.com/vitalyrodnenko/replay-sim</a>
+</footer>
+
+<script>
+(function(){
+"use strict";
+var tip=document.getElementById('tip');
+function showTip(e,t){tip.textContent=t;tip.style.opacity=1;tip.style.left=(e.clientX+12)+'px';tip.style.top=(e.clientY-10)+'px';}
+function hideTip(){tip.style.opacity=0;}
+
+/* ---- trajectory strip ---- */
+var traj=[{r:'run 1',n:1,d:11},{r:'run 2',n:9,d:12},{r:'run 3',n:10,d:12},{r:'run 4',gap:true},{r:'run 5',n:11,d:12},{r:'run 6',n:5,d:6},{r:'run 7',n:5,d:6}];
+var tEl=document.getElementById('traj');
+traj.forEach(function(t){
+  var b=document.createElement('div');b.className='tbar'+(t.gap?' gap':'');
+  if(t.gap){b.innerHTML='<div class="col" style="height:70px"></div><span class="lab">run 4 ·—</span>';}
+  else{var pct=Math.round(100*t.n/t.d);
+    b.innerHTML='<div class="col" style="height:70px"><div class="fill" style="height:'+pct+'%"></div></div><span class="lab">'+t.r+' · '+t.n+'/'+t.d+'</span>';}
+  tEl.appendChild(b);
+});
+
+/* ---- run ledger ---- */
+var runs=[
+ {id:'1',v:'v0',chg:'Baseline: the simulator as first written.',hyp:'The README\u2019s known-simplifications list names the real risks.',verdict:'FAIL · 1 of 11',cls:'bad',stamp:'WRONG RISKS',
+  d:'Aggregates were fine: throughput +0.9%, median e2e \u22122.3%. The tail was off by 867% and the pool axis was wrong in sign: predicted reuse up, real hit rate collapsed 0.856 \u2192 0.597. Both dominant causes were absent from the pre-written risk list: blocks published only on request completion, and a prefix cache uncoupled from the block pool.'},
+ {id:'2',v:'v0.2',chg:'Streaming block publication, incremental allocation, routine preemption, cache coupled to the pool.',hyp:'Run 1\u2019s two structural defects explain the failure.',verdict:'HELD-OUT 9 of 12',cls:'ok',stamp:'CONFIRMED',
+  d:'The sign error is gone. Hit rate predicted within 2.8% at a pool size never seen during development, the first evidence of physics rather than curve fitting. Preemption counts right for the first time. Remaining: a uniform 21\u201343% e2e under-prediction, and c_kv fitted to exactly zero.'},
+ {id:'3',v:'v0.3',chg:'Calibration grid redesigned: context varies at fixed batch, so the KV term is identifiable.',hyp:'Recovering c_kv closes the e2e gap (expected: 20+ points).',verdict:'HELD-OUT 10 of 12',cls:'bad',stamp:'FALSIFIED',
+  d:'c_kv was identified and bought 1.0 point. The report measured the real cause instead: the e2e deficit converts to a constant 5.6 \u00b1 0.4 ms per decode step, invariant across pools and a 4\u00d7 change in prefill budget. Also this run: config D predicted as a no-op on every metric, and measurement agreed 6/6. Predicting nothing-will-happen and being right is the hard test.'},
+ {id:'4',v:'v0.4',chg:'One number refitted: the per-step constant, measured against the online HTTP server (12.9 \u2192 16.1 ms).',hyp:'The 5.6 ms is offline-vs-online overhead; fixing it moves every e2e toward zero and leaves cost untouched.',verdict:'RE-PREDICTION',cls:'mix',stamp:'CONFIRMED*',
+  d:'83% of the e2e deficit closed; mean |e2e error| 22.6% \u2192 9.3%; cost unchanged. The asterisk: the same calibration shows the overhead is not a constant (+0.2 ms/step at batch 1 \u2192 +12 ms at batch 32 with long context), and the F/G tail misses moved 5.2 and 0.5 points the wrong way: independent of this cause. No new real runs; the report\u2019s own header rules out reading its numbers as generalisation.'},
+ {id:'5',v:'v0.5',chg:'Every coefficient moved onto the online path.',hyp:'Queue build-up behind long prefill steps: config I (built to fail) misses, H passes.',verdict:'HELD-OUT 11 of 12',cls:'bad',stamp:'INVERTED',
+  d:'Both calls wrong, in both directions. I, built to combine both suspected mechanisms, passed at \u221210.6%. H, where nothing was supposed to happen, produced the first over-prediction of the series at +20.3%. c_kv came out 8\u00d7 the offline value; run 4’s inflated constant had been standing in for a context term the offline harness could not see. Aggregate accuracy unchanged. What the run bought is correctness of construction: coefficients that finally mean what they are named.'},
+ {id:'6',v:'v0.6',chg:'Decode-generated blocks now consume prefix-cache capacity, as vLLM\u2019s cache actually behaves.',hyp:'Cache saturation explains H; hit rate should track pool size.',verdict:'HELD-OUT 5 of 6',cls:'mix',stamp:'HALF RIGHT',
+  d:'The mechanism confirmed: hit rate now tracks pool size across nine values at \u22641.4% error instead of saturating. The magnitude wrong: every first-token tail pushed into over-prediction, F flipped sign from \u221231% to +53%. And H, the config the fix was derived from, did not move: bit-identical, still +20.3%.'},
+ {id:'7',v:'v0.7',chg:'Leaf-first eviction: chain roots survive, leaves and generated junk go first.',hyp:'Full-recompute-on-eviction causes the overshoot; positive tails come down, F most.',verdict:'HELD-OUT 5 of 6',cls:'bad',stamp:'FALSIFIED',
+  d:'The change demonstrably reached the cache: hit rate exact to three decimals on six of eleven configs, the cost scorecard finished. It demonstrably never reached the tail: F, G, H and J bit-identical under two opposed cache changes. The pre-registered prediction that H would not move held exactly. Conclusion, now well tested: whatever sets the tail, the cache cannot reach it.'},
+ {id:'8a',v:'diag',chg:'No physics. Per-request instrumentation on F, J, K, H: who is actually slow?',hyp:'Same requests slow in both = magnitude error. Different requests = missing mechanism.',verdict:'SAME REQUESTS',cls:'ok',stamp:'DIAGNOSED',
+  d:'Top-5% slow sets match, 9 of 9 exactly on K. The whole residual sits on requests whose prefix match caps at exactly 1,200 tokens: the shared system prompt. Two separable causes: a flat cold-start overcharge on turn-0 prefill (the entirety of H\u2019s failure), and an eviction cliff perfectly monotonic in pool size (0 / 4 / 11 / 14 capped requests). Everything outside the cohort: within 14 ms.'}
+];
+var ledger=document.getElementById('ledger'),card=document.getElementById('runcard');
+function renderRun(i){
+  var r=runs[i];
+  card.innerHTML='<span class="stamp '+r.cls+'">'+r.stamp+'</span>'+
+    '<h3>Run '+r.id+' \u00b7 '+r.v+'</h3>'+
+    '<div class="kv"><b>changed:</b> '+r.chg+'<br><b>pre-registered:</b> '+r.hyp+'<br><b>verdict:</b> '+r.verdict+'</div>'+
+    '<p>'+r.d+'</p>';
+  Array.prototype.forEach.call(ledger.children,function(c,j){c.setAttribute('aria-selected',j===i?'true':'false');});
+}
+runs.forEach(function(r,i){
+  var b=document.createElement('button');b.className='runchip';b.setAttribute('role','tab');
+  b.innerHTML=r.id+'<span class="sub">'+r.v+'</span>';
+  b.addEventListener('click',function(){renderRun(i);});
+  ledger.appendChild(b);
+});
+renderRun(0);
+
+/* ---- hit-rate chart ---- */
+var hit=[[2440,.597,.592,'C',0],[3644,.726,.723,'E',0],[4246,.792,.792,'K',1],[4298,.797,.789,'I',1],[4607,.812,.808,'F',1],[5089,.842,.838,'J',1],[5106,.844,.838,'G',1],[5450,.855,.847,'A',0],[5490,.859,.847,'D',0],[5811,.862,.862,'H',1]];
+(function(){
+  var W=860,Hh=340,mL=56,mR=16,mT=16,mB=44;
+  var x0=2200,x1=6000,y0=.55,y1=.90;
+  function X(v){return mL+(v-x0)/(x1-x0)*(W-mL-mR);}
+  function Y(v){return Hh-mB-(v-y0)/(y1-y0)*(Hh-mT-mB);}
+  var s='<svg viewBox="0 0 '+W+' '+Hh+'" width="100%" role="img" aria-label="Hit rate versus pool size, simulator against engine">';
+  // graph paper
+  for(var gx=x0;gx<=x1;gx+=200){s+='<line x1="'+X(gx)+'" y1="'+mT+'" x2="'+X(gx)+'" y2="'+(Hh-mB)+'" stroke="var(--grid)" stroke-width="1"/>';}
+  for(var gy=y0;gy<=y1+0.001;gy+=0.025){s+='<line x1="'+mL+'" y1="'+Y(gy)+'" x2="'+(W-mR)+'" y2="'+Y(gy)+'" stroke="var(--grid)" stroke-width="1"/>';}
+  for(gy=.55;gy<=.90001;gy+=.05){s+='<text x="'+(mL-8)+'" y="'+(Y(gy)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)" class="axis">'+gy.toFixed(2)+'</text>';}
+  [2500,3500,4500,5500].forEach(function(v){s+='<text x="'+X(v)+'" y="'+(Hh-mB+18)+'" text-anchor="middle" font-size="11" fill="var(--muted)">'+v+'</text>';});
+  s+='<text x="'+(W/2)+'" y="'+(Hh-6)+'" text-anchor="middle" font-size="11" fill="var(--muted)">KV pool, blocks</text>';
+  function path(idx){return hit.map(function(p,i){return (i?'L':'M')+X(p[0])+' '+Y(p[idx]);}).join(' ');}
+  s+='<path d="'+path(1)+'" fill="none" stroke="var(--real)" stroke-width="2.5"/>';
+  s+='<path d="'+path(2)+'" fill="none" stroke="var(--sim)" stroke-width="2.5" stroke-dasharray="7 4"/>';
+  hit.forEach(function(p){
+    s+='<circle class="dot" data-t="'+p[3]+(p[4]?'*':'')+' \u00b7 '+p[0]+' blk \u00b7 real '+p[1].toFixed(3)+' / sim '+p[2].toFixed(3)+'" cx="'+X(p[0])+'" cy="'+Y(p[1])+'" r="4.5" fill="var(--real)"/>';
+    s+='<circle class="dot" data-t="'+p[3]+(p[4]?'*':'')+' \u00b7 sim '+p[2].toFixed(3)+'" cx="'+X(p[0])+'" cy="'+Y(p[2])+'" r="4.5" fill="var(--sim)"/>';
+    s+='<text x="'+X(p[0])+'" y="'+(Y(Math.max(p[1],p[2]))-10)+'" text-anchor="middle" font-size="11" fill="var(--muted)">'+p[3]+(p[4]?'*':'')+'</text>';
+  });
+  s+='<g font-size="12"><rect x="'+(mL+10)+'" y="'+(mT+6)+'" width="14" height="3" fill="var(--real)"/><text x="'+(mL+30)+'" y="'+(mT+12)+'">engine</text>'+
+     '<rect x="'+(mL+10)+'" y="'+(mT+26)+'" width="14" height="3" fill="var(--sim)"/><text x="'+(mL+30)+'" y="'+(mT+32)+'">simulator v0.6/0.7</text></g>';
+  s+='</svg>';
+  var host=document.getElementById('hitchart');host.innerHTML=s;
+  host.querySelectorAll('.dot').forEach(function(d){
+    d.addEventListener('mousemove',function(e){showTip(e,d.getAttribute('data-t'));});
+    d.addEventListener('mouseleave',hideTip);
+  });
+})();
+
+/* ---- cost table ---- */
+var cost=[
+ ['A','baseline','208.3 / 207.7','+0.3%',':'],
+ ['B','caching off','109.1 / 104.6','+4.3%','n/a'],
+ ['C','pool 0.60','167.6 / 171.2','\u22122.1%','0.9 pt'],
+ ['D','max-num-seqs 32','209.0 / 208.7','+0.1%','0.3 pt'],
+ ['E','pool 0.70','200.6 / 199.6','+0.5%','1.6 pt'],
+ ['F *','pool 0.78','201.7 / 201.3','+0.2%','0.4 pt'],
+ ['G *','prefill budget 8192','204.5 / 204.4','+0.0%','0.6 pt'],
+ ['H *','pool 0.88','209.4 / 209.2','+0.1%','0.0 pt'],
+ ['I *','0.78 \u00d7 8192 crossed','201.3 / 200.9','+0.2%','0.5 pt'],
+ ['J *','pool 0.82','204.3 / 203.9','+0.2%','0.5 pt'],
+ ['K *','pool 0.75','201.3 / 200.9','+0.2%','0.1 pt']
+];
+document.getElementById('costbody').innerHTML=cost.map(function(r){
+  return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td class="p">'+r[3]+'</td><td class="p">'+r[4]+'</td></tr>';
+}).join('');
+
+/* ---- ttft version toggle ---- */
+var ttft=[
+ // config, real, [v05,v06,v07] errors as numbers or null
+ ['A',0.642,[1.6,14.2,8.7]],
+ ['B',148.261,[-8.1,-8.1,-8.1]],
+ ['C',27.857,[8.3,5.9,8.1]],
+ ['D',0.583,[11.8,25.7,11.8]],
+ ['E',3.190,[11.5,12.0,12.3]],
+ ['F',1.360,[-31.3,52.9,52.9]],
+ ['G',0.829,[-15.9,12.7,12.7]],
+ ['H',0.542,[20.3,20.3,20.3]],
+ ['I',2.634,[-10.6,15.9,12.3]],
+ ['J',0.705,[null,32.5,32.5]],
+ ['K',1.885,[null,null,37.0]]
+];
+function renderTtft(v){
+  document.getElementById('ttftbody').innerHTML=ttft.map(function(r){
+    var e=r[2][v];
+    if(e===null)return '<tr><td>'+r[0]+'</td><td>'+r[1].toFixed(3)+' s</td><td class="z">not yet measured</td><td class="z">:</td></tr>';
+    var cls=Math.abs(e)<=15?'p':'m';
+    var prev=v>0?r[2][v-1]:null;
+    var mv;
+    if(prev===null||v===0)mv='<td class="z">:</td>';
+    else if(e===prev)mv='<td class="m">bit-identical</td>';
+    else mv='<td class="z">'+(e-prev>0?'+':'')+(e-prev).toFixed(1)+' pt</td>';
+    return '<tr><td>'+r[0]+'</td><td>'+r[1].toFixed(3)+' s</td><td class="'+cls+'">'+(e>0?'+':'')+e.toFixed(1)+'%</td>'+mv+'</tr>';
+  }).join('');
+}
+var vb=document.getElementById('verbtns');
+vb.querySelectorAll('.btn').forEach(function(b){
+  b.addEventListener('click',function(){
+    vb.querySelectorAll('.btn').forEach(function(x){x.setAttribute('aria-pressed','false');});
+    b.setAttribute('aria-pressed','true');
+    renderTtft(+b.getAttribute('data-v'));
+  });
+});
+renderTtft(1);
+
+/* ---- turn buckets ---- */
+var turns=[
+ ['turn 0 (cold start)',0.151,0.151,0.127,0.166],
+ ['turn 1',0.020,0.027,0.030,0.040],
+ ['turns 2\u20135 (mean)',0.004,0.000,-0.001,-0.001],
+ ['turn 6',0.181,0.004,0.137,0.006],
+ ['turn 7',0.197,0.141,0.159,-0.001]
+];
+document.getElementById('turnbody').innerHTML=turns.map(function(r){
+  return '<tr><td>'+r[0]+'</td>'+r.slice(1).map(function(v){
+    var cls=Math.abs(v)>=0.10?'m':(Math.abs(v)<=0.02?'p':'z');
+    return '<td class="'+cls+'">'+(v>0?'+':'')+v.toFixed(3)+'</td>';
+  }).join('')+'</tr>';
+}).join('');
+
+/* ---- series table ---- */
+var series=[
+ ['1','v0','11','1','1','11 (A\u2013C)','1','1'],
+ ['2','v0.2','23','12','18','12 (D,E)','9','10'],
+ ['3','v0.3','35','25','32','12 (F,G)','10','11'],
+ ['4','v0.4','35','23','32',':',':',':'],
+ ['5','v0.5','47','36','44','12 (H,I)','10','11'],
+ ['6','v0.6','53','44','50','6 (J)','5','5'],
+ ['7','v0.7','59','48','56','6 (K)','5','5']
+];
+document.getElementById('seriesbody').innerHTML=series.map(function(r){
+  return '<tr>'+r.map(function(c,i){return '<td'+(i===0?'':'')+'>'+c+'</td>';}).join('')+'</tr>';
+}).join('');
+})();
+</script>
+<script>
+(function(){
+"use strict";
+/* Toy block-pool demo. Deliberately simplified: 1 block = 1 cell, LRU
+   eviction of unpinned cached blocks, no batching or timing. */
+var PFX=6, HIST_PER_TURN=3, UNI=2, GEN=2, SESS=4, TURNS=3;
+var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var poolEl=document.getElementById('dPool'),logEl=document.getElementById('dLog');
+var stHit=document.getElementById('dHit'),stEv=document.getElementById('dEv'),
+    stRe=document.getElementById('dRe'),stReq=document.getElementById('dReq');
+var size=64, cells=[], cache={}, lru=[], evicted=0, recomp=0,
+    hitTok=0, totTok=0, served=0, script=[], idx=0, timer=null;
+var HUES=['#3E8E63','#2F7D8C','#6B8E3E','#8C6B2F'];
+
+function buildScript(){
+  script=[];
+  for(var t=0;t<TURNS;t++)for(var s=0;s<SESS;s++)script.push({s:s,t:t});
+}
+function reset(){
+  clearInterval(timer);timer=null;
+  cells=[];cache={};lru=[];evicted=0;recomp=0;hitTok=0;totTok=0;served=0;idx=0;
+  poolEl.innerHTML='';poolEl.style.gridTemplateColumns='repeat(16,1fr)';
+  for(var i=0;i<size;i++){var d=document.createElement('div');d.className='cell';poolEl.appendChild(d);cells.push({el:d,key:null});}
+  logEl.innerHTML='';buildScript();stats();
+  log('pool reset: '+size+' blocks. press play or step.');
+}
+function stats(){
+  stHit.textContent=totTok?Math.round(100*hitTok/totTok)+'%':'0%';
+  stEv.textContent=evicted;stRe.textContent=recomp;
+  stReq.textContent=served+' / '+script.length;
+}
+function log(msg,cls){var d=document.createElement('div');if(cls)d.className=cls;d.textContent=msg;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;}
+function freeCell(){for(var i=0;i<cells.length;i++)if(!cells[i].key)return i;return -1;}
+function paint(i,key,cls){cells[i].key=key;cells[i].el.className='cell '+cls;}
+function evictOne(){
+  if(!lru.length)return false;
+  var key=lru.shift();var c=cache[key];delete cache[key];
+  cells[c.cell].key=null;cells[c.cell].el.className='cell evict';
+  (function(el){setTimeout(function(){if(!el.parentNode)return;el.className=el.className==='cell evict'?'cell':el.className;},reduced?0:450);})(cells[c.cell].el);
+  evicted++;
+  if(key.indexOf('h')>0)log('  evicted: session '+(+key[1]+1)+' history block (LRU)','ev');
+  else if(key[0]==='g')log('  evicted: generated block (junk first is the ideal; toy LRU is fair game)','ev');
+  else log('  evicted: shared prefix block','ev');
+  return true;
+}
+function alloc(key,cls){
+  var i=freeCell();
+  if(i<0){if(!evictOne())return -1;i=freeCell();if(i<0)return -1;}
+  paint(i,key,cls);return i;
+}
+function touch(key){var p=lru.indexOf(key);if(p>=0){lru.splice(p,1);lru.push(key);}}
+function stepOnce(){
+  if(idx>=script.length){clearInterval(timer);timer=null;
+    log('done. large pool keeps every session\u2019s history; the small one loses late turns to eviction: the cliff.','hit');return;}
+  var r=script[idx++];var name='S'+(r.s+1)+'\u00b7turn'+r.t;
+  var want=[],cls=[];
+  for(var i=0;i<PFX;i++){want.push('p'+i);cls.push('pfx');}
+  for(i=0;i<r.t*HIST_PER_TURN;i++){want.push('s'+r.s+'h'+i);cls.push('hist');}
+  var hits=0,broken=false;
+  for(i=0;i<want.length;i++){
+    if(!broken&&cache[want[i]]){hits++;touch(want[i]);}
+    else broken=true;
+  }
+  var miss=want.length-hits;
+  totTok+=want.length+UNI;hitTok+=hits;
+  for(i=hits;i<want.length;i++){
+    var c=alloc(want[i],cls[i]);
+    if(c<0){log(name+': pool exhausted, request stalls','ev');break;}
+    cache[want[i]]={cell:c};
+  }
+  if(r.t>0&&miss>0){
+    recomp+=miss;
+    log(name+': matched '+hits+'/'+want.length+' cached blocks, recomputing '+miss+' (history lost to eviction)','ev');
+  } else {
+    log(name+': matched '+hits+'/'+want.length+' cached blocks'+(r.t===0?' (first turn: only the shared prefix can hit)':''),
+        hits===want.length&&want.length>0?'hit':'');
+  }
+  for(i=0;i<UNI;i++){var u=alloc('u'+idx+'-'+i,'uni');}
+  for(i=0;i<GEN;i++){var g='g'+idx+'-'+i;var gc=alloc(g,'junk');if(gc>=0){cache[g]={cell:gc};lru.push(g);}}
+  want.forEach(function(k){if(cache[k]&&lru.indexOf(k)<0)lru.push(k);});
+  served++;stats();
+}
+function play(){
+  if(timer){clearInterval(timer);timer=null;return;}
+  if(reduced){while(idx<=script.length)stepOnce();return;}
+  timer=setInterval(stepOnce,520);
+}
+document.getElementById('dPlay').addEventListener('click',play);
+document.getElementById('dStep').addEventListener('click',function(){if(timer){clearInterval(timer);timer=null;}stepOnce();});
+document.getElementById('dReset').addEventListener('click',reset);
+document.getElementById('dPoolL').addEventListener('click',function(){size=64;this.setAttribute('aria-pressed','true');document.getElementById('dPoolS').setAttribute('aria-pressed','false');reset();});
+document.getElementById('dPoolS').addEventListener('click',function(){size=32;this.setAttribute('aria-pressed','true');document.getElementById('dPoolL').setAttribute('aria-pressed','false');reset();});
+reset();
+})();
+</script>
+</div>
