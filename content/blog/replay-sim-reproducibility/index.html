@@ -1,0 +1,397 @@
+---
+title: "You make GPU decisions on one benchmark run. I ran the same one 14 times."
+date: 2026-08-29
+description: "Nearly every serving benchmark number, published or internal, comes from running the thing once. I ran one identical vLLM benchmark 14 times: throughput reproduces to 0.02%, the latency tail swings 18%, and one config turned out to be bistable rather than noisy."
+summary: "Nearly every serving benchmark number, published or internal, comes from running the thing once. I ran one identical vLLM benchmark 14 times: throughput reproduces to 0.02%, the latency tail swings 18%, and one config turned out to be bistable rather than noisy."
+tags: ["llm", "vllm", "inference", "benchmarking"]
+image: "/blog/replay-sim-reproducibility/og-image.png"
+layout: "rsim"
+---
+<div class="rsim">
+<style>
+.rsim{
+  --paper:#F7F8F3; --panel:#FFFFFF; --ink:#1B2128; --muted:#5D6670;
+  --line:#DDE0D6; --grid:#E9EBE1;
+  --sim:#2B5CAD; --real:#1B2128;
+  --pass:#1E7A4B; --passbg:#E7F1EA; --miss:#BE3B2B; --missbg:#F8E9E5;
+  --warn:#8A6D1D;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+}
+.rsim,.rsim *{box-sizing:border-box;margin:0;padding:0}
+.rsim{background:var(--paper);color:var(--ink);font:17px/1.68 var(--serif);padding-bottom:90px}
+.rsim .wrap{max-width:740px;margin:0 auto;padding:0 18px}
+.rsim .wide{max-width:920px;margin:0 auto;padding:0 18px}
+.rsim p{margin:0 0 18px}
+.rsim a{color:var(--sim);text-decoration:underline}
+.rsim a:hover{color:var(--sim)}
+.rsim h1,.rsim h2,.rsim h3,.rsim .eyebrow,.rsim th,.rsim .btn,.rsim .chip,.rsim .stamp{font-family:var(--mono)}
+.rsim h1,.rsim h2,.rsim h3{font-weight:700;color:var(--ink)}
+.rsim h2{font-size:15px;letter-spacing:.13em;text-transform:uppercase;margin:64px 0 18px;padding-top:16px;border-top:2px solid var(--ink)}
+.rsim h3{font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:26px 0 10px}
+.rsim .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.rsim .figcap{font-family:var(--mono);font-size:12px;color:var(--muted);margin:8px 0 0;line-height:1.6}
+.rsim .hero{padding:64px 0 8px}
+@media(max-width:776px){.rsim .hero{padding-left:18px;padding-right:18px}}
+.rsim h1{font-size:clamp(26px,5.6vw,44px);line-height:1.12;letter-spacing:-.015em;text-transform:uppercase;margin:10px 0 18px}
+.rsim .lede{font-size:19px;max-width:640px}
+.rsim dl.abstract{display:grid;grid-template-columns:max-content 1fr;gap:10px 18px;border:2px solid var(--ink);background:var(--panel);padding:16px 18px;margin:28px 0 0;font-size:15px}
+.rsim dl.abstract dt{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--sim);padding-top:3px}
+.rsim dl.abstract dd{margin:0;line-height:1.55}
+@media(max-width:540px){.rsim dl.abstract{grid-template-columns:1fr;gap:2px 0}.rsim dl.abstract dd{margin-bottom:8px}}
+.rsim .prev{border:1px solid var(--line);border-left:5px solid var(--sim);background:var(--panel);padding:14px 16px;margin:24px 0 0;font-size:15px}
+.rsim .prev b{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--sim)}
+.rsim table{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:12.5px;background:var(--panel)}
+.rsim th{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.rsim th,.rsim td{border:1px solid var(--line);padding:6px 8px;text-align:right;white-space:nowrap}
+.rsim th:first-child,.rsim td:first-child{text-align:left}
+.rsim td.p{background:var(--passbg);color:var(--pass);font-weight:700}
+.rsim td.m{background:var(--missbg);color:var(--miss);font-weight:700}
+.rsim td.z{color:var(--muted)}
+.rsim .scroll{overflow-x:auto}
+.rsim .fig{border:1px solid var(--line);background:var(--panel);padding:16px;margin:20px 0}
+.rsim svg text{font-family:var(--mono)}
+.rsim .btn{border:2px solid var(--ink);background:var(--panel);padding:7px 14px;font-size:12.5px;font-weight:700;cursor:pointer;letter-spacing:.05em;color:var(--ink)}
+.rsim .btn.primary{background:var(--ink);color:#fff}
+.rsim .btn:disabled{opacity:.45;cursor:default}
+.rsim .btn:focus-visible{outline:3px solid var(--sim);outline-offset:2px}
+.rsim .btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.rsim .chip{display:inline-block;border:2px solid;padding:3px 10px;font-size:11.5px;font-weight:700;letter-spacing:.08em}
+.rsim .chip.ok{color:var(--pass);border-color:var(--pass)}
+.rsim .chip.bad{color:var(--miss);border-color:var(--miss)}
+.rsim .chip.mid{color:var(--warn);border-color:var(--warn)}
+.rsim .note{border-left:4px solid var(--sim);background:var(--panel);padding:12px 16px;margin:18px 0;font-size:15px}
+.rsim .note.warn{border-left-color:var(--miss)}
+.rsim .checklist{border:2px solid var(--ink);background:var(--panel);padding:16px 18px}
+.rsim .checklist ol{list-style:decimal}
+.rsim .checklist li{margin:0 0 12px 20px;font-size:15.5px}
+.rsim .checklist li:last-child{margin-bottom:0}
+.rsim .checklist b{font-family:var(--mono);font-size:12.5px}
+/* sampler */
+.rsim .readout{display:flex;gap:22px;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px;margin:12px 0}
+.rsim .readout b{font-size:19px;display:block}
+.rsim .hist{position:relative;height:170px;border-bottom:2px solid var(--ink);margin:6px 0 26px}
+.rsim .bin{position:absolute;bottom:0;width:26px;background:var(--sim);opacity:.85;transition:height .25s}
+.rsim .binlab{position:absolute;top:100%;margin-top:4px;font:10.5px var(--mono);color:var(--muted);transform:translateX(-30%)}
+.rsim .modeband{position:absolute;top:0;bottom:0;background:var(--passbg);opacity:.8;border-left:1px dashed var(--pass);border-right:1px dashed var(--pass)}
+.rsim .modetag{position:absolute;top:2px;font:10px var(--mono);color:var(--pass)}
+.rsim .dot{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--miss);transition:top .5s cubic-bezier(.3,.7,.4,1),left .2s}
+/* boot lottery */
+.rsim .bootlog{font:12.5px/1.8 var(--mono);background:#F2F3EC;border:1px solid var(--line);padding:10px 12px;height:170px;overflow-y:auto;margin-top:10px}
+.rsim .bootlog .hi{color:var(--pass)} .rsim .bootlog .lo{color:var(--miss)} .rsim .bootlog .sys{color:var(--muted)}
+.rsim .pool-bar{height:26px;border:1px solid var(--line);background:#F1F2EB;position:relative;margin:8px 0}
+.rsim .pool-fill{position:absolute;left:0;top:0;bottom:0;background:var(--sim);transition:width .6s}
+.rsim .pool-mark{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--miss)}
+.rsim footer{border-top:2px solid var(--ink);font-family:var(--mono);font-size:12px;color:var(--muted)}
+/* .wrap outranks a bare element selector, so the footer's own spacing needs the extra class */
+.rsim footer.wrap{margin-top:70px;padding-top:14px}
+.rsim .tip{position:fixed;pointer-events:none;background:var(--ink);color:#fff;font:12px var(--mono);padding:5px 8px;border-radius:2px;opacity:0;transition:opacity .12s;z-index:9;white-space:nowrap}
+</style>
+<div class="tip" id="tip"></div>
+
+<header class="hero wrap">
+  <div class="eyebrow">Field notes · part 2 · the instrument · 29 boots, 44 counted repeats, 2 × RTX 4090</div>
+  <h1>You make GPU decisions on one benchmark run. I ran the same one 14 times.</h1>
+  <p class="lede">If you run open models in production, you make real decisions from benchmark numbers: which server settings ship, whether a change regressed latency, how many GPUs to buy. Nearly every such number, including the ones in public benchmarks and vendor blogs, comes from running the thing once. So I took one production-like setup, a 32B open model on two RTX 4090s under vLLM, fed it the same fixed stream of 192 chat-style requests, and ran that identical benchmark 14 times in a row, restarting the server each time. Then I compared the 14 answers. For the number that tells you how long your slowest users wait, up to 18% of any single answer is luck.</p>
+
+  <dl class="abstract">
+    <dt>For whom</dt><dd>Anyone who benchmarks vLLM or reads its benchmarks: platform teams picking serving configs, engineers gating CI on latency numbers, anyone sizing GPU capacity from a test run.</dd>
+    <dt>Question</dt><dd>When a serving benchmark reports a number, how much of it survives running the exact same thing again, on the same machine, with the same arguments?</dd>
+    <dt>Method</dt><dd>Pre-registered repeat batches: 14 repeats of two configs, 8 of two more, full restart and strict VRAM drain per run, no outlier rejection. Plus 29 instrumented boots and a client-dispatch calibration.</dd>
+    <dt>Findings</dt><dd>Throughput and cache metrics reproduce to 0.02%: trust them from one run. Sub-second tail latency needs 4 to 9 repeats before the number means anything. One config turned out not to be noisy at all: it is bistable, with two discrete outcomes and nothing in between. And the server's own memory pool varies by ~5% across identical boots.</dd>
+    <dt>Use it</dt><dd>Five concrete rules at the end of this page. If you change nothing else: never gate a decision on a sub-second p95 from a single run, and read your granted KV pool from the log of the run that actually executed.</dd>
+  </dl>
+
+  <div class="prev"><b>Why I measured this.</b> I build and validate an offline replay simulator that predicts what a vLLM config change does before it touches prod. Validating it meant comparing predictions against benchmark measurements, and three times in a row the thing that was broken turned out to be the measurement, not the model. At that point you stop trusting your instrument on faith and start measuring it. This page stands alone; <a href="/blog/replay-sim-validation/">part 1</a> is the origin story, with a plain-terms explainer of prefix caches and serving internals if those are new.</div>
+</header>
+
+<div>
+<section class="wrap">
+  <h2>The run that started it</h2>
+  <p>Here is the decision this article is actually about. A team changes a serving config, benchmarks it once, sees p95 latency move 15%, and ships or reverts on that number. A CI pipeline gates a release on the same kind of single measurement. A capacity plan divides a GPU budget by a throughput figure from one test run. Every one of those decisions assumes the number would come out the same if you ran it again. I had the same assumption, until one setup broke it in my face.</p>
+  <p>During my simulator-validation work, one setup refused to cooperate. Two server setups matter for this story, and I will call them by the labels from my series: <b>A</b>, the baseline, a comfortable memory allocation; and <b>J</b>, the identical server with the memory it reserves for its cache trimmed by about 4%. J's first-token tail (the time the slowest 5% of requests wait before their reply starts) measured 0.705 s in the canonical run and 0.834 s in a re-run of exactly the same thing: an 18% swing, while throughput, cache efficiency and total latency reproduced to 0.14% on the same pair of runs. One published FAIL verdict would have been a PASS against the re-run. Either the benchmark was untrustworthy, and with it every verdict in the series, or something specific was going on with that one number.</p>
+  <p>So I pre-registered a plan (analyses fixed before any run, no outlier rejection, published verdicts stand regardless) and ran config A and config J fourteen times each, alternating, with a full server restart, a strict VRAM drain and an asserted memory pool before every single run.</p>
+</section>
+
+<section class="wide">
+  <h2>Run your own benchmark</h2>
+  <p class="wrap" style="max-width:740px;margin-left:0">The fourteen measured values of config J's ttft_p95 are loaded below. Each press of the button draws one of them at random: one press is one single-run benchmark, the kind most published numbers come from. Watch what your report would have said at each point, and what shape emerges if you keep going.</p>
+  <div class="fig">
+    <div class="btns">
+      <button class="btn primary" id="sOnce">run the benchmark once</button>
+      <button class="btn" id="sMany">run 20 more</button>
+      <button class="btn" id="sReset">reset</button>
+    </div>
+    <div class="readout">
+      <span>runs so far<b id="sN">0</b></span>
+      <span>your latest single-run p95<b id="sLast">–</b></span>
+      <span>your running mean<b id="sMean">–</b></span>
+      <span>14-run reference mean<b>0.818 s</b></span>
+      <span id="sVerdictWrap">single-run report error<b id="sErr">–</b></span>
+    </div>
+    <div class="hist" id="sHist"></div>
+    <div class="figcap" id="sCap">Histogram of your draws. Green bands mark the two measured modes: 0.700–0.702 s (2 of 14 real runs) and 0.828–0.842 s (12 of 14). Nothing was ever measured between them.</div>
+  </div>
+  <p class="wrap" style="max-width:740px;margin-left:0">The toy reproduces two properties of the real data. A single run lands up to 14% from the reference mean, in either direction, with total confidence. And with enough draws the histogram refuses to fill in the middle: the section on bimodality below explains why the middle stays empty.</p>
+</section>
+
+<section class="wide">
+  <h2>The numbers: what reproduces and what does not</h2>
+  <div class="fig scroll">
+    <table aria-label="Reproducibility by metric">
+      <thead><tr><th>metric</th><th>config A CV</th><th>config J CV</th><th>single run trustworthy?</th></tr></thead>
+      <tbody>
+        <tr><td>throughput_tok_s</td><td class="p">0.02%</td><td class="p">0.02%</td><td class="p">yes</td></tr>
+        <tr><td>prefix_cache_hit_rate</td><td class="p">0.00%</td><td class="p">0.00%</td><td class="p">yes</td></tr>
+        <tr><td>e2e_p50_s</td><td class="p">&lt;0.2%</td><td class="p">&lt;0.2%</td><td class="p">yes</td></tr>
+        <tr><td>e2e_p95_s</td><td class="p">&lt;0.2%</td><td class="p">&lt;0.2%</td><td class="p">yes</td></tr>
+        <tr><td>ttft_p50_s</td><td class="z">low</td><td class="z">low</td><td class="z">mostly</td></tr>
+        <tr><td>ttft_p95_s</td><td class="m">0.69%</td><td class="m">6.07%</td><td class="m">no</td></tr>
+      </tbody>
+    </table>
+    <div class="figcap">Run-to-run coefficient of variation (CV: the spread as a percentage of the mean) over 14 repeats per setup. One metric carries essentially all the irreproducibility, and it is the one SLOs are written against.</div>
+  </div>
+  <div class="fig scroll">
+    <table aria-label="Repeats needed">
+      <thead><tr><th>you want a ttft_p95 claim within</th><th>config A needs</th><th>config J needs</th></tr></thead>
+      <tbody>
+        <tr><td>±10%</td><td>2 repeats</td><td class="m">4 repeats</td></tr>
+        <tr><td>±5%</td><td>3 repeats</td><td class="m">9 repeats</td></tr>
+      </tbody>
+    </table>
+    <div class="figcap">t-interval on the mean, computed from measured dispersion. Every single-run tail number in every public benchmark I have read sits to the left of this table.</div>
+  </div>
+  <p class="wrap" style="max-width:740px;margin-left:0">There is also a subtler trap I hit and named the repeatable-but-weakly-estimating paradox. A bootstrap confidence interval on the p95 computed <em>within</em> one run (182 requests) is an order wider than the run-to-run spread. The benchmark repeats beautifully and still estimates the true tail poorly: the fixed trace pins the sampling noise in place rather than eliminating it. Practical consequence: comparing two configs on the same trace is sound, quoting an absolute p95 as the truth about your service is not.</p>
+  <div class="note">What this means at your desk: throughput and cache numbers from one run are safe to act on. Any latency-tail gate, in CI or in a settings decision, that fires on one run is firing partly at random. Four repeats buys you a ±10% claim; budget for them. And notice what teams do instead of repeating: they pad. Untrusted tail numbers get answered with extra GPUs held "to be safe", and idle headroom is the most expensive way ever invented to buy confidence in a measurement.</div>
+</section>
+
+<section class="wide">
+  <h2>Noise vs pressure: the ladder</h2>
+  <p class="wrap" style="max-width:740px;margin-left:0">The obvious hypothesis: noise grows with memory pressure. I pre-registered it, extended the ladder to two more pool sizes, and the data declined the hypothesis.</p>
+  <div class="fig"><div id="ladder"></div>
+    <div class="figcap">ttft_p95 run-to-run CV across four pool sizes. The two most pressured configs are the two quietest. One point spikes, and it is a spike with a reason.</div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>The spike: a bistable system, not noise</h2>
+  <p>Sorted, config J's fourteen tail values are two clusters with an empty 126 ms gap between them: 0.700 and 0.702 on one side, twelve values between 0.828 and 0.842 on the other. Nothing in the gap, ever. Variance statistics describe this as CV 6.07%. The distribution describes it as a coin with two faces.</p>
+  <div class="fig"><div id="strip"></div>
+    <div class="figcap">The 14 measured values as dots. Hover any dot for its run tag. Two attractors, one forbidden zone.</div>
+  </div>
+  <p>Per-request forensics on the fourteen dumps found the switch: 3 requests out of 182 carry the difference between the modes, the largest moving by 0.308 s, while the remaining 179 sit flat within 4 ms. Config J is the memory setting where cache eviction just begins to bite: with 4% less cache, the server sometimes has to discard a session's stored context to make room. A borderline request then either finds its cached history or recomputes it from scratch, a fixed chunk of extra work, and the race between arriving requests and eviction resolves that coin on each run. Two runs in fourteen it landed heads.</p>
+  <p>This reframes what a tail number near a capacity threshold even is. It is a distribution over modes with probabilities, and any tool reporting a single value there, mine included through run 8, is reporting one flip of the coin. That sentence is now in my audit spec, and it is the single most transferable finding of the batch.</p>
+  <div class="note">What this means at your desk: if your deployment sits near a memory or cache capacity threshold, your tail metric may have two honest values. Averaging them into one number, or alerting on one of them, misdescribes the system. Either move off the threshold or monitor the mode split itself.</div>
+</section>
+
+<section class="wide">
+  <h2>The boot lottery</h2>
+  <p class="wrap" style="max-width:740px;margin-left:0">While tightening the repeat protocol I caught the server itself varying. Identical arguments, identical machine: the KV pool (the slab of GPU memory the server sets aside at startup for its attention cache, its main capacity parameter) came out ~5% different between boots. The button below replays the measured behavior.</p>
+  <div class="fig">
+    <div class="btns">
+      <button class="btn primary" id="bBoot">boot the server</button>
+      <button class="btn" id="bWipe">clear compile cache</button>
+    </div>
+    <div class="pool-bar" id="bBar"><div class="pool-fill" id="bFill" style="width:0%"></div><div class="pool-mark" style="left:88%" title="0.85 vs 0.82 utilisation difference"></div></div>
+    <div class="readout">
+      <span>granted KV pool<b id="bPool">–</b></span>
+      <span>startup time<b id="bTime">–</b></span>
+      <span>boots<b id="bN">0</b></span>
+    </div>
+    <div class="bootlog" id="bLog"><div class="sys">compile cache: cold. press boot.</div></div>
+    <div class="figcap">Measured values from two novel shapes: first-ever boot 82,688 tokens in 65 s, every warm boot after it 88,096 tokens in 30 s. The gap, 5,408 tokens, exceeds the pool difference between utilisation 0.82 and 0.85: the compile cache's state can outweigh a deliberate config change.</div>
+  </div>
+  <p class="wrap" style="max-width:740px;margin-left:0">Mechanism: the first boot of a new (batch-budget, sequence-cap) shape runs torch compilation and CUDA-graph capture while the memory profiler is sizing the pool, so the profiler sees a busier GPU and grants less. The compile cache persists on disk; every later boot of that shape is granted the larger pool. It is silent, it survives VRAM draining, and anyone sizing capacity from a first deployment inherits an uncontrolled ~5% term. Workaround: boot each new shape once, discard it, then measure. I drafted this as an upstream issue with reproduction steps.</p>
+  <div class="note wrap" style="max-width:740px;margin-left:0">What this means at your desk: an A/B test of two server configs can silently become a test of compile-cache state. If config B was ever booted before and config A was not, B starts with a ~5% bigger pool for reasons that have nothing to do with B. Warm both shapes first, then measure.</div>
+  <p class="wrap" style="max-width:740px;margin-left:0">The small print of the same batch: client dispatch granularity measured at 0.1 ms per request, meaning "simultaneous" arrivals in a trace reach the server as a 0.1 ms staircase. Negligible against a 0.85 s prefill step, and I know that because I measured it before it could become an excuse.</p>
+</section>
+
+<section class="wide">
+  <h2>Did any of part 1's verdicts sit inside the noise?</h2>
+  <p class="wrap" style="max-width:740px;margin-left:0">After measuring the noise I went back and scored every claim my part-1 series had published against the measured noise band of its own metric, with the plan pre-registered before the repeats ran. The same audit works on any benchmark suite you rely on.</p>
+  <div class="fig scroll">
+    <table aria-label="Verdicts vs noise">
+      <thead><tr><th>outcome</th><th>rows</th><th>reading</th></tr></thead>
+      <tbody>
+        <tr><td>failures inside the noise band</td><td class="p">0 of 71</td><td>every recorded MISS exceeds the harness's own reproducibility</td></tr>
+        <tr><td>passes inside the noise band</td><td class="m">11 of 82</td><td>gaps too small to resolve; not evidence of accuracy</td></tr>
+        <tr><td>failures clearing the band by &lt;2×</td><td class="m">2</td><td>run-5 H (1.54×) and run-6 J (1.34×) rest on differences this benchmark can barely resolve</td></tr>
+      </tbody>
+    </table>
+    <div class="figcap">No verdict was re-scored; they stand as published. The J row, I now know, was judged on the rare face of the coin: its canonical 0.705 s came from the 2-in-14 mode.</div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>The errors that turned out to be real</h2>
+  <p>A clean instrument is what lets you convict the model. Once the noise floor was measured (the baseline setup's tail reproduces to 0.69%), the 20-50% tail errors that survived part 1 could no longer be blamed on measurement, and two more rounds found their true cause: my simulator issued every request's first token one engine step later than the real server does. Removing that one accounting error collapsed the worst prediction from +52.9% error to +4.8%, moved a case that had sat bit-identical through four earlier fixes, and produced two consecutive blind-predicted setups with every number inside 5.1% of measured.</p>
+  <p>And measured honestly, the fix also overshot four cases that were already nearly right, so the residual ±10% scatter is the next, smaller object of study, resolvable only because the noise floor beneath it is 0.69%. None of that was resolvable before the noise floor under it was measured.</p>
+</section>
+
+<section class="wrap">
+  <h2>How this changed the way I optimize</h2>
+  <p>Everything above is about measurement, but the reason to measure is to change things. Here is the working order these results pushed me into, different in three places from how I would have optimized a serving stack a month ago.</p>
+  <p><b style="font-family:var(--mono);font-size:13px">1. Noise floor first, optimization second.</b> Any "improvement" smaller than your run-to-run spread is a story you told yourself. My floor turned out to be 0.02% on throughput and up to 6% on the tail, which means a 3% throughput win is real from one run and a 10% tail win might be nothing from three. Measuring the floor took one night and now prices every subsequent experiment.</p>
+  <p><b style="font-family:var(--mono);font-size:13px">2. Hunt order-of-magnitude switches before turning dials.</b> In my sweep of 256 configurations, the entire feasible field of memory and batching settings spanned 2.6% in cost, and the default sat within 0.6% of the best. One binary switch, prefix caching, was worth 2x throughput on the same workload. The expensive mistake is not a mistuned dial; it is a week spent on dials while a switch sits unflipped. Check the switches (caching, quantization, engine version), then decide whether the dials are even worth your time.</p>
+  <p><b style="font-family:var(--mono);font-size:13px">3. Ask whether your bottleneck is configurable at all.</b> My workload turned out to be arrival-bound: the server finished work faster than requests arrived, so no configuration could improve cost, and the sweep proved it in an evening of CPU time. The question that actually had money in it was capacity: how much more load fits in the same hardware inside the SLO. If your GPUs sit under 90% utilisation, you are likely in the same position, and config tuning is the wrong aisle of the store.</p>
+  <p><b style="font-family:var(--mono);font-size:13px">4. Write the expected effect down before flipping anything.</b> Not for ceremony. Across ten rounds, three of my confident causal stories about my own system were wrong, and I only know that because the expectation was on record before the result. A one-line prediction in the PR description ("this should cut p95 roughly 20% and leave throughput alone") costs nothing and converts every change into an experiment that can teach you something when it disagrees.</p>
+  <p><b style="font-family:var(--mono);font-size:13px">5. Iterate at the speed of the metric.</b> Cost metrics reproduce from single runs, so cost experiments can run as fast as you can restart the server. Tail claims need 4 to 9 repeats, so tail experiments belong in overnight batches, not in interactive loops. Splitting the two cadences, instead of running everything at the cautious speed, is where most of my throughput as an experimenter came from.</p>
+</section>
+
+<section class="wide">
+  <h2>If you benchmark vLLM, take these five</h2>
+  <div class="checklist"><ol>
+    <li><b>Repeat, then report the distribution.</b> Sub-second tail percentiles need 4–9 repeats before the number means anything. Medians and throughput you may trust from one run.</li>
+    <li><b>Assert the granted pool, never assume it.</b> Read KV capacity from the startup log of the run that actually executed, and reject boots that got a different pool than asserted.</li>
+    <li><b>Discard the first boot of any new shape.</b> The compile cache makes boot one a different machine than boot two.</li>
+    <li><b>Drain VRAM between runs and gate on real idle.</b> Crashed engines leak workers that poison the next measurement.</li>
+    <li><b>Near capacity thresholds, expect modes, and report them as modes.</b> A bistable tail averaged into one number is a fiction with error bars.</li>
+  </ol></div>
+</section>
+</div>
+
+<footer class="wrap">
+  part 1: <a href="/blog/replay-sim-validation/">predicting vLLM config changes</a> · code, reports and the frozen-prediction git history: <a href="https://github.com/vitalyrodnenko/replay-sim">github.com/vitalyrodnenko/replay-sim</a>
+</footer>
+
+<script>
+(function(){
+"use strict";
+var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var tip=document.getElementById('tip');
+function showTip(e,t){tip.textContent=t;tip.style.opacity=1;tip.style.left=(e.clientX+12)+'px';tip.style.top=(e.clientY-10)+'px';}
+function hideTip(){tip.style.opacity=0;}
+
+/* ---------- sampler ---------- */
+var J=[0.700,0.702,0.828,0.830,0.832,0.833,0.834,0.839,0.840,0.840,0.842,0.842,0.842,0.842];
+var REF=0.818;
+var hist=document.getElementById('sHist');
+var x0=0.68,x1=0.87;
+function X(v){return (v-x0)/(x1-x0)*100;}
+/* mode bands */
+[[0.700,0.702,'low mode · 2/14'],[0.828,0.842,'high mode · 12/14']].forEach(function(b){
+  var d=document.createElement('div');d.className='modeband';
+  d.style.left=X(b[0]-0.004)+'%';d.style.width=(X(b[1]+0.004)-X(b[0]-0.004))+'%';
+  hist.appendChild(d);
+  var t=document.createElement('span');t.className='modetag';t.style.left=X(b[0]-0.004)+'%';t.textContent=b[2];hist.appendChild(t);
+});
+/* bins */
+var BINW=0.005,bins={},labels=[0.70,0.75,0.80,0.85];
+labels.forEach(function(v){var l=document.createElement('span');l.className='binlab';l.style.left=X(v)+'%';l.textContent=v.toFixed(2)+' s';hist.appendChild(l);});
+var draws=[];
+function drop(v){
+  var key=Math.round(v/BINW);
+  var dot=document.createElement('div');dot.className='dot';
+  dot.style.left='calc('+X(v)+'% - 4px)';dot.style.top='-14px';
+  hist.appendChild(dot);
+  var grow=function(){
+    if(!bins[key]){var b=document.createElement('div');b.className='bin';
+      b.style.left='calc('+X(key*BINW)+'% - 13px)';b.style.height='0px';
+      hist.appendChild(b);bins[key]={el:b,n:0};}
+    bins[key].n++;bins[key].el.style.height=Math.min(160,bins[key].n*14)+'px';
+    dot.remove();
+  };
+  if(reduced){grow();}
+  else{requestAnimationFrame(function(){dot.style.top='150px';});setTimeout(grow,520);}
+}
+function refresh(){
+  document.getElementById('sN').textContent=draws.length;
+  if(!draws.length){['sLast','sMean','sErr'].forEach(function(id){document.getElementById(id).textContent='–';});return;}
+  var last=draws[draws.length-1];
+  var mean=draws.reduce(function(a,b){return a+b;},0)/draws.length;
+  document.getElementById('sLast').textContent=last.toFixed(3)+' s';
+  document.getElementById('sMean').textContent=mean.toFixed(3)+' s';
+  var err=100*(last-REF)/REF;
+  var e=document.getElementById('sErr');
+  e.textContent=(err>0?'+':'')+err.toFixed(1)+'%';
+  e.style.color=Math.abs(err)>5?'var(--miss)':'var(--pass)';
+}
+function draw1(){var v=J[Math.floor(Math.random()*J.length)];draws.push(v);drop(v);refresh();}
+document.getElementById('sOnce').addEventListener('click',draw1);
+document.getElementById('sMany').addEventListener('click',function(){
+  var i=0;(function tick(){if(i++>=20)return;draw1();setTimeout(tick,reduced?0:90);})();
+});
+document.getElementById('sReset').addEventListener('click',function(){
+  draws=[];Object.keys(bins).forEach(function(k){bins[k].el.remove();});bins={};
+  hist.querySelectorAll('.dot').forEach(function(d){d.remove();});refresh();
+});
+
+/* ---------- ladder chart ---------- */
+(function(){
+  var pts=[[0.60,0.25,'C'],[0.75,0.32,'K'],[0.82,6.07,'J'],[0.85,0.69,'A']];
+  var W=860,H=300,mL=56,mR=20,mT=18,mB=44;
+  function XX(u){return mL+(u-0.55)/(0.35)*(W-mL-mR);}
+  function YY(c){return H-mB-(c/7)*(H-mT-mB);}
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Tail CV vs pool utilisation">';
+  for(var u=0.55;u<=0.90001;u+=0.05){s+='<line x1="'+XX(u)+'" y1="'+mT+'" x2="'+XX(u)+'" y2="'+(H-mB)+'" stroke="var(--grid)"/>';
+    s+='<text x="'+XX(u)+'" y="'+(H-mB+18)+'" text-anchor="middle" font-size="11" fill="var(--muted)">'+u.toFixed(2)+'</text>';}
+  for(var c=0;c<=7;c+=1){s+='<line x1="'+mL+'" y1="'+YY(c)+'" x2="'+(W-mR)+'" y2="'+YY(c)+'" stroke="var(--grid)"/>';
+    s+='<text x="'+(mL-8)+'" y="'+(YY(c)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+c+'%</text>';}
+  s+='<text x="'+(W/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="11" fill="var(--muted)">gpu-memory-utilisation (pool pressure grows to the left)</text>';
+  s+='<path d="'+pts.map(function(p,i){return (i?'L':'M')+XX(p[0])+' '+YY(p[1]);}).join(' ')+'" fill="none" stroke="var(--real)" stroke-width="2"/>';
+  pts.forEach(function(p){
+    var spike=p[2]==='J';
+    s+='<circle class="lpt" data-t="config '+p[2]+' · util '+p[0]+' · CV '+p[1]+'%" cx="'+XX(p[0])+'" cy="'+YY(p[1])+'" r="6" fill="'+(spike?'var(--miss)':'var(--sim)')+'"/>';
+    s+='<text x="'+XX(p[0])+'" y="'+(YY(p[1])-12)+'" text-anchor="middle" font-size="11" fill="var(--muted)">'+p[2]+'</text>';
+  });
+  s+='<text x="'+(XX(0.82)+10)+'" y="'+(YY(6.07)+4)+'" font-size="11" fill="var(--miss)">the spike with a reason</text>';
+  s+='</svg>';
+  var host=document.getElementById('ladder');host.innerHTML=s;
+  host.querySelectorAll('.lpt').forEach(function(d){
+    d.addEventListener('mousemove',function(e){showTip(e,d.getAttribute('data-t'));});
+    d.addEventListener('mouseleave',hideTip);
+  });
+})();
+
+/* ---------- strip plot ---------- */
+(function(){
+  var W=860,H=120,mL=56,mR=20;
+  function XX(v){return mL+(v-0.68)/(0.19)*(W-mL-mR);}
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Fourteen measured values of config J tail">';
+  s+='<line x1="'+mL+'" y1="70" x2="'+(W-mR)+'" y2="70" stroke="var(--line)" stroke-width="2"/>';
+  [0.70,0.75,0.80,0.85].forEach(function(v){s+='<text x="'+XX(v)+'" y="100" text-anchor="middle" font-size="11" fill="var(--muted)">'+v.toFixed(2)+' s</text>';});
+  s+='<rect x="'+XX(0.706)+'" y="40" width="'+(XX(0.824)-XX(0.706))+'" height="60" fill="none" stroke="var(--miss)" stroke-dasharray="5 4"/>';
+  s+='<text x="'+((XX(0.706)+XX(0.824))/2)+'" y="32" text-anchor="middle" font-size="11" fill="var(--miss)">126 ms · nothing measured here, ever</text>';
+  J.forEach(function(v,i){
+    var jy=70+((i%3)-1)*9;
+    s+='<circle class="jpt" data-t="repeat '+(i+1)+' · '+v.toFixed(3)+' s" cx="'+XX(v)+'" cy="'+jy+'" r="6" fill="'+(v<0.75?'var(--pass)':'var(--sim)')+'" opacity=".85"/>';
+  });
+  s+='</svg>';
+  var host=document.getElementById('strip');host.innerHTML=s;
+  host.querySelectorAll('.jpt').forEach(function(d){
+    d.addEventListener('mousemove',function(e){showTip(e,d.getAttribute('data-t'));});
+    d.addEventListener('mouseleave',hideTip);
+  });
+})();
+
+/* ---------- boot lottery ---------- */
+(function(){
+  var cold=true,n=0,busy=false;
+  var logEl=document.getElementById('bLog');
+  function log(m,c){var d=document.createElement('div');if(c)d.className=c;d.textContent=m;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;}
+  function boot(){
+    if(busy)return;busy=true;n++;
+    var first=cold;cold=false;
+    var pool=first?82688:88096, secs=first?65:30;
+    document.getElementById('bN').textContent=n;
+    document.getElementById('bPool').textContent='…';
+    document.getElementById('bTime').textContent='…';
+    log('boot #'+n+': loading weights, profiling memory'+(first?', compiling (cold cache)':' (warm cache)'),'sys');
+    var wait=reduced?0:(first?1600:700);
+    setTimeout(function(){
+      document.getElementById('bPool').textContent=pool.toLocaleString()+' tok';
+      document.getElementById('bTime').textContent=secs+' s';
+      document.getElementById('bFill').style.width=(pool/88096*88)+'%';
+      log('granted KV pool: '+pool.toLocaleString()+' tokens · ready in '+secs+' s',first?'lo':'hi');
+      if(first)log('   the profiler sized the pool while compilation was resident','lo');
+      busy=false;
+    },wait);
+  }
+  document.getElementById('bBoot').addEventListener('click',boot);
+  document.getElementById('bWipe').addEventListener('click',function(){
+    cold=true;log('compile cache cleared: next boot is a first boot again','sys');
+  });
+})();
+})();
+</script>
+</div>
