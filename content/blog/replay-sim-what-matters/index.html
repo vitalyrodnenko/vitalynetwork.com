@@ -1,0 +1,332 @@
+---
+title: "I measured four famous LLM serving speedups. The best moved 2.6%. A config mismatch moved 92%."
+date: 2026-08-30
+description: "Tensor parallelism, speculative decoding, a faster attention backend, a different quantization: none cleared a 20% bar on a 32B model across two RTX 4090s. Then I served agent traffic on a chat-tuned config and cost went up 92%."
+summary: "Tensor parallelism, speculative decoding, a faster attention backend, a different quantization: none cleared a 20% bar on a 32B model across two RTX 4090s. Then I served agent traffic on a chat-tuned config and cost went up 92%."
+tags: ["llm", "vllm", "inference", "benchmarking"]
+image: "/blog/replay-sim-what-matters/og-image.png"
+layout: "rsim"
+---
+<div class="rsim">
+<style>
+.rsim{
+  --paper:#F7F8F3; --panel:#FFFFFF; --ink:#1B2128; --muted:#5D6670;
+  --line:#DDE0D6; --grid:#E9EBE1;
+  --sim:#2B5CAD; --real:#1B2128;
+  --pass:#1E7A4B; --passbg:#E7F1EA; --miss:#BE3B2B; --missbg:#F8E9E5;
+  --warn:#8A6D1D;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+}
+.rsim,.rsim *{box-sizing:border-box;margin:0;padding:0}
+.rsim{background:var(--paper);color:var(--ink);font:17px/1.68 var(--serif);padding-bottom:90px}
+.rsim .wrap{max-width:740px;margin:0 auto;padding:0 18px}
+.rsim .wide{max-width:920px;margin:0 auto;padding:0 18px}
+.rsim p{margin:0 0 18px}
+.rsim a{color:var(--sim);text-decoration:underline}
+.rsim a:hover{color:var(--sim)}
+.rsim h1,.rsim h2,.rsim h3,.rsim .eyebrow,.rsim th,.rsim .btn,.rsim .stamp,.rsim .mlab{font-family:var(--mono)}
+.rsim h1,.rsim h2,.rsim h3{font-weight:700;color:var(--ink)}
+.rsim h2{font-size:15px;letter-spacing:.13em;text-transform:uppercase;margin:64px 0 18px;padding-top:16px;border-top:2px solid var(--ink)}
+.rsim h3{font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:26px 0 10px}
+.rsim .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.rsim .figcap{font-family:var(--mono);font-size:12px;color:var(--muted);margin:8px 0 0;line-height:1.6}
+.rsim .hero{padding:64px 0 8px}
+@media(max-width:776px){.rsim .hero{padding-left:18px;padding-right:18px}}
+.rsim h1{font-size:clamp(24px,5vw,40px);line-height:1.14;letter-spacing:-.015em;text-transform:uppercase;margin:10px 0 18px}
+.rsim .lede{font-size:19px;max-width:660px}
+.rsim dl.abstract{display:grid;grid-template-columns:max-content 1fr;gap:10px 18px;border:2px solid var(--ink);background:var(--panel);padding:16px 18px;margin:28px 0 0;font-size:15px}
+.rsim dl.abstract dt{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--sim);padding-top:3px}
+.rsim dl.abstract dd{margin:0;line-height:1.55}
+@media(max-width:540px){.rsim dl.abstract{grid-template-columns:1fr;gap:2px 0}.rsim dl.abstract dd{margin-bottom:8px}}
+.rsim .prev{border:1px solid var(--line);border-left:5px solid var(--sim);background:var(--panel);padding:14px 16px;margin:24px 0 0;font-size:15px}
+.rsim .prev b{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--sim)}
+.rsim table{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:12.5px;background:var(--panel)}
+.rsim th{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.rsim th,.rsim td{border:1px solid var(--line);padding:6px 8px;text-align:right;white-space:nowrap}
+.rsim th:first-child,.rsim td:first-child{text-align:left}
+.rsim td.p{background:var(--passbg);color:var(--pass);font-weight:700}
+.rsim td.m{background:var(--missbg);color:var(--miss);font-weight:700}
+.rsim td.z{color:var(--muted)}
+.rsim .scroll{overflow-x:auto}
+.rsim .fig{border:1px solid var(--line);background:var(--panel);padding:16px;margin:20px 0}
+.rsim .btn{border:2px solid var(--ink);background:var(--panel);padding:7px 14px;font-size:12.5px;font-weight:700;cursor:pointer;letter-spacing:.05em;color:var(--ink)}
+.rsim .btn.primary{background:var(--ink);color:#fff}
+.rsim .btn[aria-pressed="true"]{background:var(--ink);color:#fff}
+.rsim .btn:focus-visible{outline:3px solid var(--sim);outline-offset:2px}
+.rsim .btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.rsim .note{border-left:4px solid var(--sim);background:var(--panel);padding:12px 16px;margin:18px 0;font-size:15px}
+.rsim .stamp{display:inline-block;border:2.5px solid;padding:3px 10px;font-size:11px;font-weight:700;letter-spacing:.12em;transform:rotate(-4deg)}
+.rsim .stamp.bad{color:var(--miss);border-color:var(--miss)}
+/* switch cards */
+.rsim .switches{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.rsim .sw{border:1px solid var(--line);background:var(--panel);padding:14px;cursor:pointer;position:relative}
+.rsim .sw h4{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 4px}
+.rsim .sw .claim{font-size:13px;color:var(--muted);min-height:38px}
+.rsim .sw .barwrap{height:20px;border:1px solid var(--line);position:relative;margin:10px 0 4px;background:#F1F2EB}
+.rsim .sw .target{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--warn)}
+.rsim .sw .bar{position:absolute;top:0;bottom:0;left:50%;background:var(--sim);transition:width .8s ease,left .8s ease;width:0}
+.rsim .sw .val{font-family:var(--mono);font-size:15px;font-weight:700}
+.rsim .sw .memfill{position:absolute;top:0;bottom:0;left:0;background:var(--ink);transition:width 1s ease;width:0}
+.rsim .sw .kvsliver{position:absolute;top:0;bottom:0;background:var(--miss);transition:left 1s ease,width 1s ease}
+.rsim .sw:focus-visible{outline:3px solid var(--sim);outline-offset:2px}
+/* match demo */
+.rsim .mrow{display:flex;gap:8px;align-items:center;margin:4px 0;font-family:var(--mono);font-size:11.5px}
+.rsim .mreq{display:flex;height:18px;flex:1;border:1px solid var(--line);overflow:hidden}
+.rsim .seg{height:100%}
+.rsim .seg.pfx{background:var(--sim)}
+.rsim .seg.uni{background:#B9BDB2}
+.rsim .seg.hit{background:var(--pass)}
+.rsim .seg.miss{background:var(--miss)}
+.rsim .mlab{width:52px;color:var(--muted)}
+.rsim .meter{display:flex;gap:24px;font-family:var(--mono);font-size:13px;margin:12px 0}
+.rsim .meter b{font-size:22px;display:block}
+.rsim .legend{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px}
+.rsim .legend i{width:12px;height:12px;display:inline-block;border:1px solid var(--line);margin-right:5px;vertical-align:-2px}
+/* calculator */
+.rsim .calc label{display:block;font-family:var(--mono);font-size:12px;margin:10px 0 2px}
+.rsim .calc input[type=range]{width:100%}
+.rsim .membar{height:34px;border:1px solid var(--ink);position:relative;background:#F1F2EB;margin:12px 0 4px}
+.rsim .membar .w{position:absolute;top:0;bottom:0;left:0;background:var(--ink);transition:width .3s}
+.rsim .membar .k{position:absolute;top:0;bottom:0;background:var(--pass);transition:left .3s,width .3s}
+.rsim .membar .o{position:absolute;top:0;bottom:0;background:#8A6D1D;transition:left .3s,width .3s}
+.rsim .verdict{font-family:var(--mono);font-size:14px;font-weight:700;margin-top:8px}
+.rsim .checklist{border:2px solid var(--ink);background:var(--panel);padding:16px 18px}
+.rsim .checklist ol{list-style:decimal}
+.rsim .checklist li{margin:0 0 12px 20px;font-size:15.5px}
+.rsim .checklist li:last-child{margin-bottom:0}
+.rsim .checklist b{font-family:var(--mono);font-size:12.5px}
+.rsim footer{border-top:2px solid var(--ink);font-family:var(--mono);font-size:12px;color:var(--muted)}
+/* .wrap outranks a bare element selector, so the footer's own spacing needs the extra class */
+.rsim footer.wrap{margin-top:70px;padding-top:14px}
+</style>
+
+<header class="hero wrap">
+  <div class="eyebrow">Field notes · part 3 · what actually matters · 2 × RTX 4090 · 480 simulations · 15 live runs</div>
+  <h1>I measured four famous LLM serving speedups. The best moved 2.6%. A config mismatch moved 92%.</h1>
+  <p class="lede">Tensor parallelism, speculative decoding, a faster attention backend, a different quantization: the standard menu of inference optimizations. I tested each one on a production-like setup, a 32-billion-parameter open model on two RTX 4090s under vLLM, against a fixed stream of 192 recorded requests. None of them cleared even a 20% bar. Then I took a server tuned for one type of traffic and gave it another type, and the cost of serving doubled. This page shows the numbers, and the mechanics behind them, so you can check which side of that mismatch your own stack is on.</p>
+
+  <dl class="abstract">
+    <dt>For whom</dt><dd>Anyone running open models on their own GPUs, and anyone about to spend a week tuning an inference stack.</dd>
+    <dt>Question</dt><dd>Where does serving cost actually live: in the famous switches, in the config dials, or somewhere else?</dd>
+    <dt>Method</dt><dd>Pre-registered experiments, predictions committed to git before measuring, negative results reported as negative. Four switch tests, a 96-configuration sweep across five workload types, six live cross-check runs.</dd>
+    <dt>Findings</dt><dd>Switches: at most 2.6%, and that one negative. Dials within one workload: a 2.6% spread across the whole grid. Matching the config to the traffic type: up to 2x, and my replay simulator predicted the measured +92% penalty within 7 points before the run.</dd>
+    <dt>Use it</dt><dd>A decision guide at the end, plus a memory calculator that answers "will this model even run on one GPU" without booting anything.</dd>
+  </dl>
+
+  <div class="prev"><b>Why I ran this.</b> I build a replay simulator that predicts what a vLLM config change will do before it touches production. Parts <a href="/blog/replay-sim-validation/">1</a> and <a href="/blog/replay-sim-reproducibility/">2</a> validated the predictions and measured the benchmark noise floor. This part uses the validated tool to ask the question everyone actually has: what is worth changing. The page stands alone; the earlier parts are the receipts.</div>
+</header>
+
+<div>
+<section class="wide">
+  <h2>Round one: the four switches</h2>
+  <p class="wrap" style="max-width:740px;margin-left:0">Each of these is a real recommendation from real deployment guides, and each promises a lot. Success bar, fixed before any run: at least 20% throughput change. Press a card to see what the hardware said. Every number is a live measurement against a same-day baseline; throughput reproduces to 0.02% run-to-run on this rig, so these are not noise.</p>
+  <div class="fig">
+    <div class="switches" id="switches"></div>
+    <div class="figcap">Measured throughput change vs baseline. Orange line = the 20% bar. Press each card. TP=1 is a special case: it produced no number at all, for a reason worth its own section below.</div>
+  </div>
+  <div class="note">What this means at your desk: on a 24 GB card serving a quantized 32B model, the famous switches are not where your money is. Before copying any "we got 3x with X" post, check what model size, hardware, and traffic it was measured on. Mine is a common self-hosted setup, and on it the whole menu moved low single digits.</div>
+</section>
+
+<section class="wrap">
+  <h2>Round two: the dials</h2>
+  <p>Maybe the wins hide in the continuous settings: how much GPU memory the cache gets, how many requests run at once, how big a chunk of prompt one step processes. I swept 96 combinations of those dials for each of five traffic types, using the simulator (validated in part 1: cost predictions land within a few percent), and checked the top candidates live.</p>
+  <p>Within any single traffic type, the frontier is flat. On my agent-style workload the entire feasible field spanned 2.6% in cost, and the stock default sat within 0.6% of the best possible setting. On the chat workload all 96 configurations tied within 0.1%. Tuning dials for a workload you already serve correctly is polishing a coin.</p>
+  <div class="note">What this means at your desk: if your GPUs are not saturated, your config is probably already fine, and a week of dial-tuning will buy you low single digits. The question with money in it is different, and it is the next section.</div>
+</section>
+
+<section class="wide">
+  <h2>Round three: the match</h2>
+  <p class="wrap" style="max-width:740px;margin-left:0">Two kinds of traffic dominate real deployments. Agent traffic: long sessions where every request re-sends the same system prompt and a growing history, so most of each prompt is text the server has already seen. Chat traffic: independent one-shot requests, every prompt new. Servers exploit the first kind with a prefix cache: memory that stores computed prompt state so repeated text is reused instead of recomputed. The catch is that this cache competes for the same GPU memory as everything else, so a config tuned for chat gives it very little. Run the demo both ways and watch the cost meter.</p>
+  <div class="fig">
+    <div class="btns" role="group" aria-label="Demo controls">
+      <button class="btn" id="dTraffic" aria-pressed="true">traffic: AGENT</button>
+      <button class="btn" id="dCache" aria-pressed="true">config: BIG CACHE (agent-tuned)</button>
+      <button class="btn primary" id="dRun">serve 10 requests</button>
+    </div>
+    <div class="meter">
+      <span>prompt tokens recomputed<b id="dCost">0</b></span>
+      <span>reused from cache<b id="dSaved">0</b></span>
+      <span>relative serving cost<b id="dRel">–</b></span>
+    </div>
+    <div id="dRows"></div>
+    <div class="legend">
+      <span><i style="background:var(--sim)"></i>shared prefix in prompt</span>
+      <span><i style="background:#B9BDB2"></i>unique text</span>
+      <span><i style="background:var(--pass)"></i>reused (cache hit)</span>
+      <span><i style="background:var(--miss)"></i>recomputed (cache too small or empty)</span>
+    </div>
+    <div class="figcap">A toy with real proportions: agent prompts here are ~85% repeated content, like my measured trace (cache hit rate 0.86). Try all four combinations; the mismatch quadrant is the expensive one.</div>
+  </div>
+  <p class="wrap" style="max-width:740px;margin-left:0">Now the real numbers. I took the config that a chat workload picks (small cache, since chat has nothing to reuse) and served agent-style traffic on it, live. Throughput fell by half: the server spent its time recomputing the same system prompt over and over. Serving cost: <b>+92.3%</b>. And the simulator had predicted <b>+99.6%</b> before the run, 7.4 points off, by the right mechanism: it predicted the cache hit rate would collapse from 0.86 to 0.59, and the measured collapse was 0.86 to 0.60.</p>
+  <div class="note">What this means at your desk: the expensive failure mode is not a badly tuned server, it is a correctly tuned server whose traffic changed. A product that launched as a chatbot and grew agent features, a shared pool serving a new tenant, a migration that copied last year's config: each of these can quietly double cost with zero errors in any log. Check when your config was last matched against what your traffic looks like now.</div>
+</section>
+
+<section class="wide">
+  <h2>The memory wall, predicted to the gibibyte</h2>
+  <p class="wrap" style="max-width:740px;margin-left:0">The tensor-parallelism switch deserves its own story. TP=2 splits the model across both GPUs; TP=1 would run it on one, freeing the other for a second replica. Before booting TP=1 I did the arithmetic and froze it in git: the 18 GB of model weights would consume 90% of the memory budget, leaving less than the minimum the cache needs, so the server should refuse to start. It refused, citing the same numbers: 2.0 GiB of cache needed, my prediction 2.00 GiB. The lesson generalizes, so here it is as a calculator instead of a story.</p>
+  <div class="fig calc">
+    <label>model weights on disk: <span id="cW">18</span> GB</label>
+    <input type="range" id="cWr" min="3" max="42" value="18" step="1">
+    <label>GPU memory per card: <span id="cG">24</span> GB</label>
+    <input type="range" id="cGr" min="16" max="96" value="24" step="8">
+    <label>memory utilization target: <span id="cU">0.85</span></label>
+    <input type="range" id="cUr" min="70" max="95" value="85" step="1">
+    <div class="membar" id="cBar"><div class="w" id="cWfill"></div><div class="o" id="cOfill"></div><div class="k" id="cKfill"></div></div>
+    <div class="legend"><span><i style="background:var(--ink)"></i>weights</span><span><i style="background:#8A6D1D"></i>runtime overhead (~1.5 GB)</span><span><i style="background:var(--pass)"></i>left for KV cache</span></div>
+    <div class="verdict" id="cVerdict"></div>
+    <div class="figcap">Rough single-GPU arithmetic; the same sum matched vLLM's own refusal message to the gibibyte on my box. KV appetite varies by model family; the verdict bands here assume a 32B-class model needing ~2 GiB for an 8K context.</div>
+  </div>
+  <div class="note">What this means at your desk: "does it fit on one card" is answerable on paper before any download. And when weights eat most of the card, remember what the leftover sliver was for: the cache from round three. A model that technically boots with a starved cache will serve agent traffic at recompute prices.</div>
+</section>
+
+<section class="wrap">
+  <h2>The speculation asterisk</h2>
+  <p>One switch deserves an honest footnote instead of a clean null. N-gram speculative decoding (the server guesses the next few tokens from patterns already in the context, then verifies the guesses in one step) did nothing for throughput, and there is a solid reason: my workloads are prefill-dominated, with 7 to 17 tokens of prompt processing per generated token, and speculation accelerates only the generation side. But it cut median response latency roughly in half in my runs. That number carries an asterisk: my synthetic prompts made the guesser artificially perfect, so half is the ceiling, and real traffic with 60-80% guess accuracy will see less. The transferable part: on prefill-heavy traffic, speculation is a latency lever, and it is a throughput lever only where generation dominates. Decide which of those you are buying before you pay the setup cost.</p>
+</section>
+
+<section class="wide">
+  <h2>Deciding for your own stack</h2>
+  <div class="checklist"><ol>
+    <li><b>Find out which regime you are in.</b> GPUs mostly idle between requests: you are arrival-bound, config changes will not move cost, and the useful question is capacity headroom. GPUs saturated: continue.</li>
+    <li><b>Profile your traffic before touching settings.</b> One number does most of the work: what share of your prompt tokens repeat across requests (shared system prompts, histories, templates). High share means the prefix cache is your economy; protect its memory. Near zero means cache memory is dead weight you can spend on concurrency.</li>
+    <li><b>Match, then stop.</b> Give the cache what your reuse share justifies, verify the hit rate in production telemetry, and leave the remaining dials alone: measured spread across my whole grid was 2.6%.</li>
+    <li><b>Re-check the match on a schedule, and after every product change.</b> The 92% failure needs no bug and no alert to happen. Traffic drift is the whole risk; one telemetry graph (cache hit rate over time) watches it for free.</li>
+    <li><b>Treat switch claims as claims about someone else's setup.</b> Model size, card memory, and prefill share decide whether TP, speculation, or a backend swap can even matter. Do the memory arithmetic first; it is free and it was exact on my box.</li>
+  </ol></div>
+</section>
+</div>
+
+<footer class="wrap">
+  part 1: <a href="/blog/replay-sim-validation/">predicting vLLM config changes</a> · part 2: <a href="/blog/replay-sim-reproducibility/">how much of a benchmark is noise</a> · code, traces and frozen predictions: <a href="https://github.com/vitalyrodnenko/replay-sim">github.com/vitalyrodnenko/replay-sim</a>
+</footer>
+
+<script>
+(function(){
+"use strict";
+var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---- switch cards ---- */
+var SW=[
+ {id:'spec',name:'Speculative decoding',claim:'"Guess tokens ahead, verify in one step: big speedups."',val:-2.6,extra:'and median latency halved, with an asterisk: see below'},
+ {id:'attn',name:'Attention backend swap',claim:'"FlashInfer over FlashAttention: free performance."',val:0.14,extra:''},
+ {id:'quant',name:'Different quantization',claim:'"GPTQ over AWQ (or back): meaningful gains."',val:-0.14,extra:''},
+ {id:'tp',name:'Tensor parallelism TP=1',claim:'"One replica per GPU beats splitting the model."',val:null,extra:''}
+];
+var host=document.getElementById('switches');
+SW.forEach(function(s){
+  var d=document.createElement('button');d.className='sw';d.setAttribute('aria-expanded','false');
+  d.innerHTML='<h4>'+s.name+'</h4><div class="claim">'+s.claim+'</div>'+
+    (s.val===null
+      ? '<div class="barwrap" aria-hidden="true"><div class="memfill"></div><div class="kvsliver" style="background:var(--pass)"></div></div><div class="val">press to test</div>'
+      : '<div class="barwrap" aria-hidden="true"><div class="target" style="left:90%"></div><div class="target" style="left:10%"></div><div class="bar"></div></div><div class="val">press to test</div>');
+  host.appendChild(d);
+  d.addEventListener('click',function(){
+    if(d.getAttribute('aria-expanded')==='true')return;
+    d.setAttribute('aria-expanded','true');
+    var val=d.querySelector('.val');
+    if(s.val===null){
+      var mf=d.querySelector('.memfill'),kv=d.querySelector('.kvsliver');
+      requestAnimationFrame(function(){mf.style.width='90%';kv.style.left='90%';kv.style.width='2%';});
+      setTimeout(function(){
+        val.innerHTML='<span class="stamp bad">REFUSED TO BOOT</span>';
+        var c=document.createElement('div');c.className='claim';c.style.minHeight='0';c.style.marginTop='6px';
+        c.textContent='weights fill 90% of the budget; the cache cannot get its 2.0 GiB minimum. Predicted on paper before booting.';
+        d.appendChild(c);
+      },reduced?0:1050);
+    }else{
+      var bar=d.querySelector('.bar');
+      var w=Math.min(40,Math.abs(s.val)/25*100);
+      requestAnimationFrame(function(){
+        bar.style.width=w+'%';
+        bar.style.left=s.val<0?(50-w)+'%':'50%';
+      });
+      setTimeout(function(){
+        val.textContent=(s.val>0?'+':'')+s.val.toFixed(2)+'% throughput'+(s.extra?' · '+s.extra:'');
+      },reduced?0:850);
+    }
+  });
+});
+
+/* ---- match demo ---- */
+var traffic='agent',cache='big';
+var tBtn=document.getElementById('dTraffic'),cBtn=document.getElementById('dCache');
+tBtn.addEventListener('click',function(){
+  traffic=traffic==='agent'?'chat':'agent';
+  tBtn.textContent='traffic: '+traffic.toUpperCase();reset();
+});
+cBtn.addEventListener('click',function(){
+  cache=cache==='big'?'small':'big';
+  cBtn.textContent='config: '+(cache==='big'?'BIG CACHE (agent-tuned)':'SMALL CACHE (chat-tuned)');reset();
+});
+var rows=document.getElementById('dRows'),busy=false;
+var cost=0,saved=0;
+function reset(){rows.innerHTML='';cost=0;saved=0;upd(0);}
+function upd(base){
+  document.getElementById('dCost').textContent=cost.toLocaleString();
+  document.getElementById('dSaved').textContent=saved.toLocaleString();
+  var rel=base?(cost/base):null;
+  document.getElementById('dRel').textContent=rel?rel.toFixed(2)+'x of matched config':'–';
+}
+function runDemo(){
+  if(busy)return;busy=true;reset();
+  var PFX=850,UNI=150,N=10;
+  // matched-agent baseline cost: first request computes prefix, rest reuse
+  var baseAgent=PFX+UNI + (N-1)*UNI;
+  var baseChat=N*(PFX+UNI); // chat: all unique regardless
+  var i=0;
+  function one(){
+    if(i>=N){busy=false;return;}
+    var r=document.createElement('div');r.className='mrow';
+    var isAgent=traffic==='agent';
+    var hitCap=cache==='big'?1:0.18; // small cache retains ~18% of the prefix
+    var pfxShare=isAgent?PFX:0, uniShare=isAgent?UNI:PFX+UNI;
+    var reMiss;
+    if(!isAgent){reMiss=0;}
+    else if(i===0){reMiss=PFX;}
+    else{reMiss=Math.round(PFX*(1-hitCap));}
+    var reHit=isAgent&&i>0?PFX-reMiss:0;
+    cost+=reMiss+uniShare;saved+=reHit;
+    var html='<span class="mlab">req '+(i+1)+'</span><div class="mreq">';
+    if(isAgent){
+      if(i===0){html+='<div class="seg miss" style="width:'+(PFX/10)+'px;flex:'+PFX+'"></div>';}
+      else{
+        if(reHit)html+='<div class="seg hit" style="flex:'+reHit+'"></div>';
+        if(reMiss)html+='<div class="seg miss" style="flex:'+reMiss+'"></div>';
+      }
+      html+='<div class="seg uni" style="flex:'+UNI+'"></div>';
+    }else{
+      html+='<div class="seg miss" style="flex:'+(PFX+UNI)+'"></div>';
+    }
+    html+='</div>';
+    r.innerHTML=html;rows.appendChild(r);
+    upd(traffic==='agent'?baseAgent:baseChat);
+    i++;setTimeout(one,reduced?0:260);
+  }
+  one();
+}
+document.getElementById('dRun').addEventListener('click',runDemo);
+reset();
+
+/* ---- calculator ---- */
+var cw=document.getElementById('cWr'),cg=document.getElementById('cGr'),cu=document.getElementById('cUr');
+function calc(){
+  var W=+cw.value,G=+cg.value,U=+cu.value/100,OH=1.5;
+  document.getElementById('cW').textContent=W;
+  document.getElementById('cG').textContent=G;
+  document.getElementById('cU').textContent=U.toFixed(2);
+  var budget=G*U, kv=budget-W-OH;
+  var wp=Math.min(100,W/G*100), op=Math.min(100-wp,OH/G*100), kp=Math.max(0,kv/G*100);
+  document.getElementById('cWfill').style.width=wp+'%';
+  var o=document.getElementById('cOfill');o.style.left=wp+'%';o.style.width=op+'%';
+  var k=document.getElementById('cKfill');k.style.left=(wp+op)+'%';k.style.width=kp+'%';
+  var v=document.getElementById('cVerdict');
+  if(kv<2.0){v.textContent='REFUSES TO BOOT at 8K context: cache needs ~2 GiB, gets '+Math.max(0,kv).toFixed(1)+' GB';v.style.color='var(--miss)';}
+  else if(kv<6){v.textContent='boots, cache-starved: '+kv.toFixed(1)+' GB for KV. Agent-style traffic will pay recompute prices';v.style.color='var(--warn)';}
+  else{v.textContent='comfortable: '+kv.toFixed(1)+' GB for KV cache';v.style.color='var(--pass)';}
+}
+[cw,cg,cu].forEach(function(x){x.addEventListener('input',calc);});
+calc();
+})();
+</script>
+</div>
