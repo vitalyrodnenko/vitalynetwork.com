@@ -1,0 +1,534 @@
+---
+title: "I tested KV cache prefetch on 744,000 real agent tool calls. The prediction does not pay."
+date: 2026-10-06
+description: "Open RFCs in vLLM and SGLang propose predicting when an agent returns from a tool call and prefetching its KV cache. Tested on 744,000 real tool calls and a real vLLM server, the prediction does not pay. Host tier size, the store path and one scheduler flag move the tail."
+summary: "Open RFCs in vLLM and SGLang propose predicting when an agent returns from a tool call and prefetching its KV cache. Tested on 744,000 real tool calls and a real vLLM server, the prediction does not pay. Host tier size, the store path and one scheduler flag move the tail."
+tags: ["llm", "vllm", "inference", "agentic-ai"]
+image: "/blog/tool-pauses-kv-cache/og-image.png"
+---
+<div class="tp">
+
+<style>
+.tp{--ink:#1c1c1a;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;--surf:#fcfcfb;--wash:#f3f2ee;--gpu:#2a78d6;--host:#eb6834;--aqua:#1baf7a;--gold:#eda100;--bad:#e34948;--band:rgba(42,120,214,.12);--hostlight:#f8c9b4;--gpulight:#cde2fb}
+/* follow the site toggle, which sets data-theme on body */
+[data-theme="dark"] .tp{--ink:#f2f2ef;--ink2:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--surf:#1a1a19;--wash:#232321;--gpu:#3987e5;--host:#d95926;--aqua:#199e70;--gold:#c98500;--bad:#e66767;--band:rgba(57,135,229,.18);--hostlight:#6b3a24;--gpulight:#1c3a5e}
+.tp .lede{font-size:1.15em;color:var(--ink2);max-width:40em}
+.tp figure{margin:2.2em 0;padding:0}
+.tp .sv{overflow-x:auto}
+.tp figure svg{display:block;width:100%;height:auto;font:13px system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
+.tp figcaption{font-size:.9em;color:var(--ink2);margin-top:.6em;max-width:44em}
+.tp .tick{fill:var(--muted);font-variant-numeric:tabular-nums}
+.tp .lab{fill:var(--ink)}
+.tp .lab2{fill:var(--ink2)}
+.tp .big{fill:var(--ink);font-size:30px;font-weight:600;font-variant-numeric:tabular-nums}
+.tp .gridline{stroke:var(--grid);stroke-width:1}
+.tp .axisline{stroke:var(--axis);stroke-width:1}
+.tp .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.85em;color:var(--ink2);margin:.4em 0 0}
+.tp .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+.tp .ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 .8em}
+.tp .ctl button{font:inherit;font-size:.9em;padding:.35em .8em;border:1px solid var(--axis);background:transparent;color:var(--ink);border-radius:4px;cursor:pointer}
+.tp .ctl button[aria-pressed="true"]{background:var(--ink);color:var(--surf);border-color:var(--ink)}
+.tp .ctl button:focus-visible{outline:2px solid var(--gpu);outline-offset:2px}
+.tp .ctl .note{font-size:.85em;color:var(--ink2);margin-left:auto}
+.tp table{border-collapse:collapse;width:100%;font-size:.92em;margin:1.2em 0}
+.tp th,.tp td{text-align:left;vertical-align:top;padding:.5em .6em;border-bottom:1px solid var(--grid)}
+.tp th{font-weight:600;color:var(--ink2)}
+/* the theme gives every first column 22% width, which crushes the four-column tables */
+.tp th:first-child,.tp td:first-child{width:auto}
+/* on phones, let wide tables scroll inside themselves instead of widening the page */
+@media (max-width:600px){.tp table{display:block;overflow-x:auto}.tp td code{overflow-wrap:anywhere}}
+/* on phones a 700-wide viewBox shrinks figure text to ~6px; keep figures legible and let them scroll */
+@media (max-width:600px){.tp .sv svg{min-width:560px}}
+.tp td.num,.tp th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tp code{font-size:.92em}
+.tp .sources{font-size:.88em;color:var(--ink2)}
+/* scroll reveal */
+.tp .draw{stroke-dasharray:700;stroke-dashoffset:700}
+.tp .in .draw{animation:tpDraw 1.4s ease-out forwards}
+.tp .grow{transform-box:fill-box;transform-origin:left center;transform:scaleX(0)}
+.tp .in .grow{animation:tpGrow .8s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--i,0)*70ms)}
+.tp .growr{transform-box:fill-box;transform-origin:right center;transform:scaleX(0)}
+.tp .in .growr{animation:tpGrow .8s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--i,0)*70ms)}
+.tp .pop{opacity:0}
+.tp .in .pop{animation:tpPop .5s ease-out forwards;animation-delay:calc(var(--i,0)*90ms)}
+@keyframes tpDraw{to{stroke-dashoffset:0}}
+@keyframes tpGrow{to{transform:scaleX(1)}}
+@keyframes tpPop{to{opacity:1}}
+/* hero: JS-driven; CSS only for the block move */
+.tp .hero .kv{transition:transform .6s cubic-bezier(.4,0,.2,1),opacity .5s}
+.tp .hero .other{transition:transform .5s ease,opacity .4s}
+.tp .hero .wait{transform-box:fill-box;transform-origin:left center}
+.tp .wf rect{transition:fill .35s ease}
+@media (prefers-reduced-motion:reduce){
+  .tp .draw{stroke-dashoffset:0}.tp .grow,.tp .growr{transform:none}.tp .pop{opacity:1}
+  .tp .in .draw,.tp .in .grow,.tp .in .growr,.tp .in .pop{animation:none}
+  .tp .hero .kv,.tp .hero .other,.tp .wf rect{transition:none}
+}
+</style>
+
+<p class="lede">When a coding agent calls a tool, its KV cache sits in GPU memory until the agent comes back. Several research groups and open RFCs in vLLM and SGLang propose to predict the return and move the cache out and back in around it. I tested that on 744,000 real tool calls and on a real vLLM server. The prediction does not pay. What moves the tail is the size of the host memory tier, the store path, and one scheduler flag.</p>
+
+<!-- ============ Figure 1: hero ============ -->
+<figure class="hero" id="tp-hero">
+<div class="ctl" role="group" aria-label="Scenario">
+<button type="button" data-s="0" aria-pressed="true">Cache stays on GPU</button>
+<button type="button" data-s="1" aria-pressed="false">Cache moved to host memory</button>
+<button type="button" data-s="2" aria-pressed="false">Cache dropped</button>
+<button type="button" id="tp-hero-play" aria-pressed="true">Pause</button>
+</div>
+<div class="sv"><svg viewBox="0 0 700 352" role="img" aria-labelledby="tp-hero-t tp-hero-d">
+<title id="tp-hero-t">One tool call, three fates of the KV cache</title>
+<desc id="tp-hero-d">The agent sends a prompt, calls a tool, and returns. If its KV cache stayed on the GPU it waits 40 ms for the first token. If the cache was moved to host memory it waits 210 ms to reload. If the cache was dropped it waits 3.66 s to recompute a 32K-token context.</desc>
+<!-- timeline -->
+<text x="40" y="18" class="tick">prompt</text>
+<text x="290" y="18" class="tick" text-anchor="middle">tool runs, agent waits</text>
+<text x="444" y="18" class="tick">agent returns</text>
+<rect x="40" y="28" width="100" height="18" fill="var(--gpu)" rx="2"/>
+<rect x="150" y="28" width="280" height="18" fill="none" stroke="var(--axis)" stroke-dasharray="4 3" rx="2"/>
+<rect id="tp-hero-wait" class="wait" x="440" y="28" width="250" height="18" fill="var(--bad)" rx="2" style="transform:scaleX(0)"/>
+<line id="tp-hero-head" x1="40" y1="22" x2="40" y2="52" stroke="var(--ink)" stroke-width="2"/>
+<!-- GPU box -->
+<rect x="40" y="76" width="320" height="152" fill="var(--wash)" rx="8"/>
+<text x="54" y="98" class="lab">GPU memory</text>
+<text x="346" y="218" class="tick" text-anchor="end">24 GB, the scarce one</text>
+<!-- host box -->
+<rect x="400" y="76" width="260" height="152" fill="var(--wash)" rx="8"/>
+<text x="414" y="98" class="lab">Host memory (DRAM)</text>
+<text x="646" y="218" class="tick" text-anchor="end">cheap, 0.21 s away for 32K tokens</text>
+<!-- other sessions' blocks (appear under pressure) -->
+<g id="tp-hero-others" fill="var(--axis)">
+<rect class="other" x="150" y="112" width="60" height="36" rx="3" style="opacity:0;transform:translateY(-14px)"/>
+<rect class="other" x="218" y="112" width="60" height="36" rx="3" style="opacity:0;transform:translateY(-14px)"/>
+<rect class="other" x="286" y="112" width="60" height="36" rx="3" style="opacity:0;transform:translateY(-14px)"/>
+<rect class="other" x="150" y="156" width="60" height="36" rx="3" style="opacity:0;transform:translateY(-14px)"/>
+<rect class="other" x="218" y="156" width="60" height="36" rx="3" style="opacity:0;transform:translateY(-14px)"/>
+<rect class="other" x="286" y="156" width="60" height="36" rx="3" style="opacity:0;transform:translateY(-14px)"/>
+</g>
+<!-- the session's KV block -->
+<g id="tp-hero-kv" class="kv" style="opacity:0">
+<rect x="56" y="112" width="86" height="80" fill="var(--gpu)" rx="4"/>
+<text x="99" y="148" fill="#fff" text-anchor="middle" font-size="12">this agent's</text>
+<text x="99" y="164" fill="#fff" text-anchor="middle" font-size="12">KV cache</text>
+</g>
+<text id="tp-hero-msg" x="40" y="258" class="lab2"></text>
+<!-- stopwatch -->
+<text x="40" y="318" class="tick">wait for the first token after the return</text>
+<text id="tp-hero-num" x="40" y="346" class="big">0 ms</text>
+<text id="tp-hero-note" x="690" y="346" class="tick" text-anchor="end"></text>
+</svg></div>
+<figcaption>Figure 1. Three fates of a returning agent's cache, to scale on the red bar. A host-memory reload costs about one seventeenth of a recompute. That ratio is the reason the prediction idea fails: once a host tier exists, the most a clever policy can save is the difference between the first two scenarios.</figcaption>
+</figure>
+
+<h2>The question</h2>
+
+<p>A coding agent spends much of its wall-clock time waiting on tools: test runs, builds, package installs. While it waits, its KV cache occupies the scarcest resource on an inference server, GPU memory. The open proposals are built on a simple idea: when a tool call starts, move the cache to host memory; shortly before the agent returns, bring it back; time the return by a prediction from past tool durations.</p>
+
+<p>I had a supply-chain version of the same idea. Tool durations might cluster around a typical length, the way deliveries do, so the probability of return would rise toward that length and a serving system could learn, per tool type, when to demote and when to prefetch. Two questions followed. Can the prediction be good enough to pay off? And if it cannot, what actually decides how long an agent waits for its next token after a tool call?</p>
+
+<h2>What I did</h2>
+
+<ol>
+  <li>Measured the pause distributions on 743,819 real tool calls from Claude Code and Codex. The data is TraceLab, released by the University of Washington under CC BY 4.0: 8,058 sessions from 71 developers, with tool names and timings but no arguments.</li>
+  <li>Measured the cost of every operation on one RTX 4090 running vLLM 0.30 with Llama 3.1 8B in FP8: prefill, decode, store to host memory, reload.</li>
+  <li>Compared retention and prefetch policies in a discrete-event simulator built from those two inputs: 636 runs over load, host tier size, context length and hardware constants.</li>
+  <li>Checked the simulator against the real engine, fourteen one-hour runs, and used those runs to test what moves the tail.</li>
+</ol>
+
+<p>Every number below comes from a script or a table in the project.</p>
+
+<h2>1. Tool pauses have a falling hazard</h2>
+
+<p>Most pauses are short and the long ones hold the time. 70 percent of Claude Code pauses end within a second; the 4.9 percent of tool calls over a minute hold 92 percent of all tool time. Human approval waits are 37 percent of Claude's tool time on their own.</p>
+
+<p>The shape of the long pauses decides whether prefetch can be timed. The idea I started with needs a return rate that rises toward a typical duration. The data shows the opposite. Pick how long the agent has already waited:</p>
+
+<!-- ============ Figure 2: two worlds ============ -->
+<figure class="viz" id="tp-haz">
+<div class="ctl" role="group" aria-label="Time already waited">
+<button type="button" data-k="0" aria-pressed="true">waited 4 s</button>
+<button type="button" data-k="1" aria-pressed="false">waited 25 s</button>
+<button type="button" data-k="2" aria-pressed="false">waited 146 s</button>
+</div>
+<div class="sv"><svg viewBox="0 0 700 250" role="img" aria-live="polite" aria-labelledby="tp-haz-t">
+<title id="tp-haz-t">Expected remaining wait: the idea versus the data</title>
+<!-- left: the idea -->
+<rect x="0" y="0" width="335" height="250" fill="var(--wash)" rx="8"/>
+<text x="16" y="26" class="lab">The idea I started with</text>
+<text x="16" y="44" class="tick">tool runs have a typical length, so the wait shrinks</text>
+<text x="16" y="66" class="tick">illustration, no data</text>
+<text x="16" y="118" class="tick">expected time still to wait</text>
+<rect id="tp-haz-lbar" x="16" y="128" width="280" height="22" fill="var(--axis)" rx="3" style="transition:width .5s ease"/>
+<text id="tp-haz-lnum" x="16" y="186" class="big">shrinks</text>
+<!-- right: the data -->
+<rect x="365" y="0" width="335" height="250" fill="var(--wash)" rx="8"/>
+<text x="381" y="26" class="lab">What 574,485 pauses show</text>
+<text x="381" y="44" class="tick">Claude Code test runs, mean residual life</text>
+<text x="381" y="66" class="tick">measured</text>
+<text x="381" y="118" class="tick">expected time still to wait</text>
+<rect id="tp-haz-rbar" x="381" y="128" width="44" height="22" fill="var(--gpu)" rx="3" style="transition:width .5s ease"/>
+<text id="tp-haz-rnum" x="381" y="186" class="big">54 s</text>
+<text id="tp-haz-rnote" x="381" y="212" class="lab2">after 4.4 s of waiting</text>
+</svg></div>
+<figcaption>Figure 2. The longer a pause has lasted, the longer it is expected to last: 54 s left after 4 s, 113 s after 25 s, 361 s after 146 s. Every tool class behaves this way. The hazard falls with a log-log slope between −0.56 and −0.74 across 18 log-spaced bins, with no significant rise anywhere. There is no moment at which a return becomes likely.</figcaption>
+</figure>
+
+<p>The only sharp structure in the data is harness deadlines. Codex polls a running command at its yield deadline of 1, 5, 10 or 30 seconds, so a three-minute test reaches the engine as a chain of short pauses separated by small LLM steps; 30 percent of Codex pauses end on such a deadline. Claude Code pauses spike at its 120 and 600 second Bash timeouts and at sleeps the agent writes itself. A gateway that parses the tool call sees these values directly.</p>
+
+<p>Better keys do improve the forecast. Conditioning the remaining-time distribution on tool class, command skeleton and developer, with shrinkage toward the parent level when a key has few observations, cuts the upper-quantile error for Claude by 27 to 37 percent, and the shrinkage works where Continuum's rule of a hundred observations per tool stays at the global baseline. At the low quantiles that a prefetch rule uses when stalls are expensive, the key barely matters. A better forecast never turns into a serving gain, for the reason in the next section.</p>
+
+<h2>2. Prediction-timed retention and prefetch do not beat LRU plus a host tier</h2>
+
+<p>The simulator replays TraceLab sessions closed-loop against a model of continuous batching, an HBM token pool, an LRU host tier with write-through stores and one shared PCIe link, calibrated on twelve single-session measurements. Contexts are scaled so the 99th-percentile session peaks at 32K tokens; load is counted in multiples of the eight sessions whose KV just fits the GPU pool. Six policies ran on it:</p>
+
+<ul>
+  <li>P0, no host tier at all.</li>
+  <li>P1, LRU with a host tier, which is what vLLM plus LMCache does out of the box.</li>
+  <li>P2, Continuum's time-to-live rule, implemented from the paper's equation with per-tool duration distributions.</li>
+  <li>P4-D, a deadline-aware prefetch that reloads just before a known harness deadline. Deadlines are exact here, which makes it an upper bound.</li>
+  <li>P5, an oracle that knows every return time.</li>
+  <li>P5-B, a strict Belady oracle: it never pins, evicts the session that returns latest, and prefetches each session just before its return.</li>
+</ul>
+
+<!-- ============ Figure 3: ratio to LRU ============ -->
+<figure class="viz">
+<div class="sv"><svg viewBox="0 0 700 250" role="img" aria-labelledby="tp-pol-t">
+<title id="tp-pol-t">p99 time to first token after a tool call, relative to plain LRU with a host tier</title>
+<!-- band: success rule, more than 10% better = ratio below 0.9 -->
+<rect x="160" y="30" width="200" height="180" fill="var(--band)"/>
+<text x="260" y="24" class="tick" text-anchor="middle">more than 10% better than LRU</text>
+<g class="gridline"><line x1="160" y1="30" x2="160" y2="210"/><line x1="260" y1="30" x2="260" y2="210"/><line x1="460" y1="30" x2="460" y2="210"/><line x1="560" y1="30" x2="560" y2="210"/></g>
+<line x1="360" y1="30" x2="360" y2="210" stroke="var(--ink)" stroke-width="1.5"/>
+<text x="160" y="228" class="tick" text-anchor="middle">0.6</text><text x="260" y="228" class="tick" text-anchor="middle">0.8</text><text x="360" y="228" class="tick" text-anchor="middle">1.0, same as LRU</text><text x="460" y="228" class="tick" text-anchor="middle">1.2</text><text x="560" y="228" class="tick" text-anchor="middle">1.4</text>
+<!-- rows -->
+<g class="lab" font-size="12">
+<text x="0" y="68">×1 load, 8 sessions</text><text x="0" y="84" class="tick">LRU p99: 0.31 s</text>
+<text x="0" y="128">×2 load, 16 sessions</text><text x="0" y="144" class="tick">LRU p99: 4.13 s</text>
+<text x="0" y="188">×4 load, 32 sessions</text><text x="0" y="204" class="tick">LRU p99: 16.6 s</text>
+</g>
+<g class="gridline"><line x1="160" y1="75" x2="590" y2="75"/><line x1="160" y1="135" x2="590" y2="135"/><line x1="160" y1="195" x2="590" y2="195"/></g>
+<!-- x = 360 + (r-1)*500 -->
+<g stroke="var(--surf)" stroke-width="2">
+<circle class="pop" style="--i:0" cx="330" cy="75" r="7" fill="var(--host)"><title>P2 Continuum TTL, ×1: 0.94</title></circle>
+<circle class="pop" style="--i:1" cx="245" cy="75" r="7" fill="var(--aqua)"><title>P4-D deadline prefetch, ×1: 0.77</title></circle>
+<circle class="pop" style="--i:2" cx="200" cy="75" r="7" fill="var(--gold)"><title>P5 oracle, ×1: 0.68</title></circle>
+<circle class="pop" style="--i:3" cx="375" cy="135" r="7" fill="var(--host)"><title>P2, ×2: 1.03</title></circle>
+<circle class="pop" style="--i:4" cx="380" cy="135" r="7" fill="var(--aqua)"><title>P4-D, ×2: 1.04</title></circle>
+<circle class="pop" style="--i:5" cx="355" cy="135" r="7" fill="var(--gold)"><title>P5, ×2: 0.99</title></circle>
+<circle class="pop" style="--i:6" cx="410" cy="195" r="7" fill="var(--host)"><title>P2, ×4: 1.10</title></circle>
+<circle class="pop" style="--i:7" cx="280" cy="195" r="7" fill="var(--aqua)"><title>P4-D, ×4: 0.84</title></circle>
+<circle class="pop" style="--i:8" cx="260" cy="195" r="7" fill="var(--gold)"><title>P5, ×4: 0.80</title></circle>
+</g>
+</svg></div>
+<div class="legend"><span style="--c:var(--host)">P2, Continuum TTL</span><span style="--c:var(--aqua)">P4-D, prefetch at known deadlines</span><span style="--c:var(--gold)">P5, oracle that knows every return</span></div>
+<figcaption>Figure 3. Each dot is a policy's p99 divided by LRU's at the same load, simulator, 4090 constants, 20 GB host tier, mean of five seeds. Only the lightest load, where the GPU is idle enough to hold everything, shows gains inside the band. At ×4 the seed ranges are 11.2 to 19.6 s for LRU and 10.4 to 15.6 s for the oracle: they overlap. Without a host tier (P0) p99 is 4.3, 8.2 and 27.5 s.</figcaption>
+</figure>
+
+<p>The pre-registered success rule was a gain of more than 10 percent on p99 over the TTL policy, on all traffic or on the deadline subset, or a 10 percent gain in sessions served within a one-second SLO. Over 32 stable configurations:</p>
+
+<ul>
+  <li>Continuum's TTL rule pins the cache for 3.4 percent of tool pauses on this trace and behaves like LRU. The trace's memoryfulness coefficient is negative (−0.35), a case the Continuum paper notes as possible but did not observe on its own workloads.</li>
+  <li>Deadline prefetch clears 10 percent in 6 configurations, never in every seed. On the deadline subset, 9.</li>
+  <li>The Belady oracle clears 10 percent in 9, 5 of them in every seed, most of them at the lightest load. Its median p99 ratio to the TTL policy is 0.96.</li>
+  <li>The goodput rule never passes.</li>
+  <li>Forcing the memoryfulness coefficient positive makes the TTL pin up to two thirds of tool pauses. The TTL policy stays within about 10 percent of LRU at every setting.</li>
+</ul>
+
+<p>The reason is Figure 1. A pin can save at most one reload plus the queueing it avoids, and with a host tier present that rarely outweighs the GPU capacity the pin holds. The PCIe link runs at 1 to 3 percent utilisation; its queueing delay comes from large stores of cold prompts, not from bursts of reloads. The negative result covers KV placement on a PCIe-attached host tier with that tier present. Remote or cross-node tiers, setups with no host tier, and uses of prediction for scheduling or admission were not tested.</p>
+
+<h2>3. What moves the tail</h2>
+
+<p>Engine evidence first. Every number in this section comes from a one-hour replay of real TraceLab sessions against vLLM 0.30 with LMCache on the 4090, with prompts of the right lengths and session-consistent prefixes so caching and eviction behave as on real traffic.</p>
+
+<!-- ============ Figure 4: levers ============ -->
+<figure class="viz">
+<div class="sv"><svg viewBox="0 0 700 300" role="img" aria-labelledby="tp-lev-t">
+<title id="tp-lev-t">Change in the tail of post-tool TTFT per lever, measured on vLLM</title>
+<g class="gridline"><line x1="240" y1="8" x2="240" y2="272"/><line x1="320" y1="8" x2="320" y2="272"/><line x1="400" y1="8" x2="400" y2="272"/><line x1="480" y1="8" x2="480" y2="272"/><line x1="640" y1="8" x2="640" y2="272"/></g>
+<line x1="560" y1="8" x2="560" y2="272" class="axisline"/>
+<text x="240" y="292" class="tick" text-anchor="middle">−80%</text><text x="320" y="292" class="tick" text-anchor="middle">−60%</text><text x="400" y="292" class="tick" text-anchor="middle">−40%</text><text x="480" y="292" class="tick" text-anchor="middle">−20%</text><text x="560" y="292" class="tick" text-anchor="middle">0</text><text x="640" y="292" class="tick" text-anchor="middle">+20%</text>
+<g class="lab" font-size="12">
+<text x="0" y="20" font-weight="600">Host tier size, 4 to 8 GB</text>
+<text x="0" y="40">16 sessions, seed 0</text><text x="0" y="60">16 sessions, seed 1</text><text x="0" y="80">16 sessions, seed 2</text><text x="0" y="100">32 sessions</text>
+<text x="0" y="132" font-weight="600">Store path, native vs LMCache</text>
+<text x="0" y="152">16 sessions (p95)</text><text x="0" y="172">32 sessions</text>
+<text x="0" y="204" font-weight="600">Prefill chunk cap</text>
+<text x="0" y="224">16 sessions, seed 0</text><text x="0" y="244">16 sessions, seed 1</text><text x="0" y="264">16 sessions, seed 2</text>
+</g>
+<!-- bars: zero at 560, 4 px per % ; .growr origin right for negatives -->
+<rect class="growr" style="--i:0" x="276" y="30" width="284" height="13" fill="var(--gpu)" rx="2"><title>−71%: 288 to 84 ms</title></rect>
+<rect class="growr" style="--i:1" x="404" y="50" width="156" height="13" fill="var(--gpu)" rx="2"><title>−39%: 112 to 69 ms</title></rect>
+<rect class="growr" style="--i:2" x="444" y="70" width="116" height="13" fill="var(--gpu)" rx="2"><title>−29%: 108 to 77 ms</title></rect>
+<rect class="growr" style="--i:3" x="384" y="90" width="176" height="13" fill="var(--gpu)" rx="2"><title>−44%: 294 to 165 ms</title></rect>
+<rect class="growr" style="--i:4" x="396" y="142" width="164" height="13" fill="var(--aqua)" rx="2"><title>−41% on p95</title></rect>
+<rect class="growr" style="--i:5" x="556" y="162" width="4" height="13" fill="var(--aqua)" rx="2"><title>−1%: tail unchanged, median halved</title></rect>
+<rect class="growr" style="--i:6" x="492" y="214" width="68" height="13" fill="var(--gold)" rx="2"><title>−17%</title></rect>
+<rect class="growr" style="--i:7" x="420" y="234" width="140" height="13" fill="var(--gold)" rx="2"><title>−35%</title></rect>
+<rect class="growr" style="--i:8" x="464" y="254" width="96" height="13" fill="var(--gold)" rx="2"><title>−24%</title></rect>
+<g class="pop lab2" style="--i:9" font-size="11" text-anchor="end">
+<text x="272" y="41">−71</text><text x="400" y="61">−39</text><text x="440" y="81">−29</text><text x="380" y="101">−44</text><text x="392" y="153">−41</text><text x="552" y="173">−1</text><text x="488" y="225">−17</text><text x="416" y="245">−35</text><text x="460" y="265">−24</text>
+</g>
+</svg></div>
+<figcaption>Figure 4. Change in the mean of the slowest 5 percent of post-tool requests (p95 where marked), lever on versus off, on the real engine. Left is better. The host tier is the only lever that helps on every run. Not shown: the prefill cap at 32 sessions, where the GPU pool is oversubscribed, makes p95 13 percent worse and the median 2.3 times worse.</figcaption>
+</figure>
+
+<h3>The host tier, sized well above the GPU pool</h3>
+
+<p>This machine cannot pin more than 8 GB without swapping, so I scaled the workload down five times and let 4 and 8 GB stand for host tiers at 1.9 and 3.7 times the GPU KV pool, the ratios that 20 and 40 GB would have at full scale. Doubling the tier cut the tail mean of post-tool TTFT by 71, 39 and 29 percent on three seeds at 16 sessions, and by 44 percent at 32.</p>
+
+<p>What the slowest requests are made of follows that ratio. Each square below is one of the 100 slowest requests in a run:</p>
+
+<!-- ============ Figure 5: waffle ============ -->
+<figure class="viz" id="tp-comp">
+<div class="ctl" role="group" aria-label="Host tier size relative to the GPU KV pool">
+<button type="button" data-k="0" aria-pressed="false">0.75× the pool</button>
+<button type="button" data-k="1" aria-pressed="true">1.9× the pool</button>
+<button type="button" data-k="2" aria-pressed="false">3.7× the pool</button>
+</div>
+<div class="sv"><svg viewBox="0 0 700 250" role="img" aria-live="polite" aria-labelledby="tp-comp-t">
+<title id="tp-comp-t">What the slowest 5 percent of requests are made of, by host tier size</title>
+<g id="tp-waffle" class="wf"></g>
+<text id="tp-comp-lab" x="300" y="40" class="lab" font-size="15"></text>
+<text id="tp-comp-l1" x="300" y="66" class="lab2"></text>
+<text id="tp-comp-l2" x="300" y="84" class="lab2"></text>
+<g font-size="12">
+<rect x="300" y="128" width="12" height="12" fill="var(--bad)" rx="2"/><text x="318" y="139" class="lab2">recomputed from scratch in every run</text>
+<rect x="300" y="150" width="12" height="12" fill="var(--hostlight)" rx="2"/><text x="318" y="161" class="lab2">recomputed in some runs, served from the tier in others</text>
+<rect x="300" y="172" width="12" height="12" fill="var(--gpulight)" rx="2"/><text x="318" y="183" class="lab2">reloaded from the tier or queued, never recomputed</text>
+</g>
+<text id="tp-comp-note" x="300" y="216" class="tick"></text>
+<text id="tp-comp-note2" x="300" y="234" class="tick"></text>
+</svg></div>
+<figcaption>Figure 5. Share of the slowest 5 percent that are full recomputes of their context, across the engine runs at each tier size. At 0.75× the pool one long session evicted between steps can own the p99: in one baseline run, 8 of the 13 slowest requests were steps of a single 60K-token session, each recomputed from scratch in about 10 seconds.</figcaption>
+</figure>
+
+<h3>The store path</h3>
+
+<p>LMCache's in-process connector writes the KV through to host memory inside the engine's step, so each forward pass waits for the copy. vLLM's own offloading connector (<code>--kv-offloading-backend native</code>) copies on a separate CUDA stream.</p>
+
+<table>
+<thead><tr><th>Batch 1, median of 5</th><th class="num">1K tokens</th><th class="num">8K</th><th class="num">32K</th></tr></thead>
+<tbody>
+<tr><td>Cold prefill, no connector</td><td class="num">71 ms</td><td class="num">571 ms</td><td class="num">3,648 ms</td></tr>
+<tr><td>Cold prefill with LMCache store</td><td class="num">77 ms (+7%)</td><td class="num">649 ms (+14%)</td><td class="num">4,019 ms (+10%)</td></tr>
+<tr><td>Cold prefill with native store</td><td class="num">71 ms (0%)</td><td class="num">569 ms (0%)</td><td class="num">3,670 ms (+1%)</td></tr>
+<tr><td>Reload from host memory, LMCache</td><td class="num">21 ms</td><td class="num">63 ms</td><td class="num">210 ms</td></tr>
+<tr><td>Reload from host memory, native</td><td class="num">36 ms</td><td class="num">125 ms</td><td class="num">409 ms</td></tr>
+</tbody>
+</table>
+
+<p>Under load the blocking store adds up. At 32 sessions LMCache stored 2.7 TiB during the hour and held the GPU for 238 seconds of it, 6.6 percent. Native copied a similar volume overlapped with compute. On the engine, native cut p95 by 41 percent at 16 sessions; at 32 sessions it halved the median and left the tail where it was. Its reloads run at about half LMCache's speed and did not show up in the tail at either load. On vLLM 0.30 the native connector is the safer default. Why the tail at 32 sessions does not improve is an open question: reload speed and store cost are both ruled out by the simulator.</p>
+
+<h3>The prefill chunk cap</h3>
+
+<p><code>long_prefill_token_threshold</code> caps how many tokens one request may prefill per engine step, so short prefills queued behind a long one still get budget. At 16 sessions it improved the tail mean on all three seeds, by 17 to 35 percent, with p95 mixed. At 32 sessions the GPU pool is oversubscribed, 37 percent of post-tool requests recompute their context, and the cap backfires: p95 up 13 percent, the median 2.3 times worse. With the cap on, the engine keeps more prefills in flight at once, GPU KV usage rises from 46 to 53 percent, and fewer requests are served from the GPU cache. Set it last, and only with memory headroom.</p>
+
+<h3>What an operator should do, in order</h3>
+
+<table>
+<thead><tr><th>Order</th><th>Lever</th><th>Decision</th><th>Engine evidence</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Host tier size</td><td>Size it well above the GPU KV pool: 3.7× rather than 1.9×.</td><td>Tail mean −71, −39, −29% on three seeds at 16 sessions; −44% at 32.</td></tr>
+<tr><td>2</td><td>Store path</td><td>On vLLM 0.30, use the native offloading connector rather than LMCache's in-process connector.</td><td>p95 −41% at 16 sessions; median halved at 32; store penalty +1% against +10% on a cold 32K prefill.</td></tr>
+<tr><td>3</td><td>Prefill chunk cap</td><td>Set <code>long_prefill_token_threshold</code> only when the GPU pool has headroom.</td><td>Tail mean −17 to −35% at 16 sessions; p95 +13% and median ×2.3 when oversubscribed.</td></tr>
+<tr><td>4</td><td>Retention timing, prediction-timed prefetch</td><td>Leave to LRU once a host tier exists.</td><td>Nothing on the engine. In simulation, within seed noise.</td></tr>
+</tbody>
+</table>
+
+<h2>4. What the simulator can and cannot predict</h2>
+
+<p>Before any lever result came in, I fixed a pass rule: for a lever at a given load and seed, the engine's and the simulator's ratios (lever on over off) must agree within 0.15 on p95 and on the tail mean, absolute values within 15 percent or 30 ms, and direction must match when the predicted effect exceeds 15 percent. Three of ten checks passed.</p>
+
+<!-- ============ Figure 6: engine vs simulator ============ -->
+<figure class="viz">
+<div class="sv"><svg viewBox="0 0 700 262" role="img" aria-labelledby="tp-sim-t">
+<title id="tp-sim-t">Lever effect on the tail mean, engine against simulator, same seed</title>
+<g class="gridline"><line x1="240" y1="8" x2="240" y2="236"/><line x1="373.3" y1="8" x2="373.3" y2="236"/><line x1="640" y1="8" x2="640" y2="236"/></g>
+<line x1="506.7" y1="8" x2="506.7" y2="236" class="axisline"/>
+<text x="240" y="252" class="tick" text-anchor="middle">0</text><text x="373.3" y="252" class="tick" text-anchor="middle">0.5</text><text x="506.7" y="252" class="tick" text-anchor="middle">1.0 (no effect)</text><text x="640" y="252" class="tick" text-anchor="middle">1.5</text>
+<g class="lab" font-size="12">
+<text x="0" y="25">Cap, 16 sessions, seed 0</text><text x="0" y="47">Cap, 16 sessions, seed 1</text><text x="0" y="69">Cap, 16 sessions, seed 2</text><text x="0" y="91">Cap, 32 sessions</text>
+<text x="0" y="113">Host tier, 16 sessions, seed 0</text><text x="0" y="135">Host tier, 16 sessions, seed 1</text><text x="0" y="157">Host tier, 16 sessions, seed 2</text><text x="0" y="179">Host tier, 32 sessions</text>
+<text x="0" y="201">Native connector, 16 sessions</text><text x="0" y="223">Native connector, 32 sessions</text>
+</g>
+<g fill="var(--band)"><rect x="421.3" y="13" width="80" height="16" rx="3"/><rect x="373.3" y="35" width="80" height="16" rx="3"/><rect x="402.7" y="57" width="80" height="16" rx="3"/><rect x="501.3" y="79" width="80" height="16" rx="3"/><rect x="277.3" y="101" width="80" height="16" rx="3"/><rect x="362.7" y="123" width="80" height="16" rx="3"/><rect x="389.3" y="145" width="80" height="16" rx="3"/><rect x="349.3" y="167" width="80" height="16" rx="3"/><rect x="386.7" y="189" width="80" height="16" rx="3"/><rect x="464" y="211" width="80" height="16" rx="3"/></g>
+<g stroke="var(--axis)" stroke-width="1.5"><line x1="461.3" y1="21" x2="442.7" y2="21"/><line x1="413.3" y1="43" x2="485.3" y2="43"/><line x1="442.7" y1="65" x2="336" y2="65"/><line x1="541.3" y1="87" x2="488" y2="87"/><line x1="317.3" y1="109" x2="290.7" y2="109"/><line x1="402.7" y1="131" x2="354.7" y2="131"/><line x1="429.3" y1="153" x2="392" y2="153"/><line x1="389.3" y1="175" x2="357.3" y2="175"/><line x1="426.7" y1="197" x2="608" y2="197"/><line x1="504" y1="219" x2="445.3" y2="219"/></g>
+<g class="pop" fill="var(--gpu)" stroke="var(--surf)" stroke-width="2"><circle cx="442.7" cy="21" r="5"><title>simulator 0.76</title></circle><circle cx="485.3" cy="43" r="5"><title>simulator 0.92</title></circle><circle cx="336" cy="65" r="5"><title>simulator 0.36</title></circle><circle cx="488" cy="87" r="5"><title>simulator 0.93</title></circle><circle cx="290.7" cy="109" r="5"><title>simulator 0.19</title></circle><circle cx="354.7" cy="131" r="5"><title>simulator 0.43</title></circle><circle cx="392" cy="153" r="5"><title>simulator 0.57</title></circle><circle cx="357.3" cy="175" r="5"><title>simulator 0.44</title></circle><circle cx="608" cy="197" r="5"><title>simulator 1.38</title></circle><circle cx="445.3" cy="219" r="5"><title>simulator 0.77</title></circle></g>
+<g fill="var(--ink)" stroke="var(--surf)" stroke-width="2"><circle cx="461.3" cy="21" r="5"><title>engine 0.83, pass</title></circle><circle cx="413.3" cy="43" r="5"><title>engine 0.65, fail</title></circle><circle cx="442.7" cy="65" r="5"><title>engine 0.76, fail</title></circle><circle cx="541.3" cy="87" r="5"><title>engine 1.13, fail</title></circle><circle cx="317.3" cy="109" r="5"><title>engine 0.29, pass</title></circle><circle cx="402.7" cy="131" r="5"><title>engine 0.61, fail by 0.18</title></circle><circle cx="429.3" cy="153" r="5"><title>engine 0.71, pass</title></circle><circle cx="389.3" cy="175" r="5"><title>engine 0.56, ratio within band, failed the absolute check by 5 ms</title></circle><circle cx="426.7" cy="197" r="5"><title>engine 0.70, fail</title></circle><circle cx="504" cy="219" r="5"><title>engine 0.99, fail</title></circle></g>
+</svg></div>
+<div class="legend"><span style="--c:var(--ink)">engine</span><span style="--c:var(--gpu)">simulator, same seed</span><span style="--c:var(--band)">engine ± 0.15, the pass band</span></div>
+<figcaption>Figure 6. Tail-mean ratio per check. The host tier, the one large effect, lands in the band on three of four runs and on the right side of 1.0 on all four. The smaller levers scatter.</figcaption>
+</figure>
+
+<p>The scatter is a property of the test, not of the levers. At these loads the slowest 5 percent of requests are decided by which ones happen to collide with a long prefill, and the engine's and the simulator's slowest-5-percent sets share only 41 percent of their requests even on the baseline. The width of the pass band and the simulator's own sensitivity tell the story in one picture:</p>
+
+<!-- ============ Figure 6b: wobble vs tolerance ============ -->
+<figure class="viz">
+<div class="sv"><svg viewBox="0 0 700 150" role="img" aria-labelledby="tp-wob-t">
+<title id="tp-wob-t">The pass band against the simulator's own sensitivity to a 2 percent change</title>
+<text x="0" y="16" class="lab" font-size="12">Pass band, engine ± 0.15</text>
+<rect class="grow" style="--i:0" x="0" y="24" width="120" height="16" fill="var(--band)" rx="3"/>
+<text x="128" y="37" class="lab2" font-size="12">width 0.30</text>
+<text x="0" y="72" class="lab" font-size="12">Simulator's own range when its prefill speed moves by ±2%</text>
+<rect class="grow" style="--i:2" x="0" y="80" width="248" height="16" fill="var(--gpu)" rx="3"/>
+<text x="256" y="93" class="lab2" font-size="12">0.55 to 1.17, width 0.62</text>
+<text x="0" y="132" class="tick">Prefill cap, 16 sessions, seed 0, tail-mean ratio. A 2% change is well inside the simulator's calibration error.</text>
+</svg></div>
+<figcaption>Figure 7. A seed-matched test cannot resolve a 0.15 tolerance when a calibration-sized nudge moves the prediction by 0.62. Across seeds the two agree better: all three engine ratios for the cap at 16 sessions fall inside the simulator's range over ten seeds, and the engine's mean (0.75) equals the simulator's median. That comparison was not pre-registered, so it is reported as an observation.</figcaption>
+</figure>
+
+<p>On absolute tail latency the simulator is within 10 to 15 percent of the engine; the baseline at 16 sessions matched p99 to the second decimal (10.29 against 10.25 s). The conclusion for anyone validating a serving simulator against an agent trace: compare distributions over many seeds, or test only large effects.</p>
+
+<h2>5. Consumer GPU, server GPU</h2>
+
+<p>The engine tests ran on an RTX 4090. The result depends on one ratio, reload against recompute: 0.21 s against 3.66 s for a 32K context on this card, about 1 to 17. On an H100, PCIe 5.0 doubles the link bandwidth and FP8 throughput is about three times higher, so the ratio moves to about 1 to 11. The reload stays an order of magnitude cheaper than the recompute, and the policy result holds. What changes on a server GPU: the absolute latencies, the amount of DRAM that gives the same tier-to-pool ratio on an 80 GB card, and the load at which the prefill cap turns from help to harm.</p>
+
+<!-- ============ Figure 8: 4090 vs H100 ============ -->
+<figure class="viz">
+<div class="sv"><svg viewBox="0 0 700 158" role="img" aria-labelledby="tp-gpu-t">
+<title id="tp-gpu-t">Reload against recompute for a 32K context, RTX 4090 measured and H100 estimated</title>
+<text x="0" y="22" class="lab" font-size="12">RTX 4090, measured</text>
+<text x="160" y="40" class="tick">recompute</text>
+<rect class="grow" style="--i:0" x="240" y="30" width="366" height="14" fill="var(--bad)" rx="2"><title>3.66 s</title></rect><text x="612" y="42" class="lab2" font-size="12">3.66 s</text>
+<text x="160" y="62" class="tick">reload</text>
+<rect class="grow" style="--i:1" x="240" y="52" width="21" height="14" fill="var(--host)" rx="2"><title>0.21 s</title></rect><text x="267" y="64" class="lab2" font-size="12">0.21 s, one 17th</text>
+<text x="0" y="106" class="lab" font-size="12">H100, estimated from public specs</text>
+<text x="160" y="124" class="tick">recompute</text>
+<rect class="grow" style="--i:2" x="240" y="114" width="122" height="14" fill="var(--bad)" rx="2"><title>about 1.2 s</title></rect><text x="368" y="126" class="lab2" font-size="12">about 1.2 s</text>
+<text x="160" y="146" class="tick">reload</text>
+<rect class="grow" style="--i:3" x="240" y="136" width="11" height="14" fill="var(--host)" rx="2"><title>about 0.1 s</title></rect><text x="257" y="148" class="lab2" font-size="12">about 0.1 s, one 11th</text>
+</svg></div>
+<figcaption>Figure 8. Bars share one scale. The H100 row is an estimate from public specs, not a measurement: FP8 dense throughput about three times the 4090's, PCIe 5.0 about twice PCIe 4.0. The simulator's H100-like constant set, built from the same public figures, gives the same picture: prefetch within a few percent of the TTL policy at every load, and every policy overloaded at 128K contexts and ×4 load.</figcaption>
+</figure>
+
+<table>
+<thead><tr><th>What</th><th>Carries over</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Prediction-timed prefetch gains little</td><td>Yes</td><td>Depends on reload being far cheaper than recompute. True on both cards.</td></tr>
+<tr><td>Size the host tier by its ratio to the GPU pool</td><td>Yes, as a ratio</td><td>An 80 GB H100 holds a larger pool, so the same 3.7× means more DRAM; the tier-to-pool ratio is the quantity that mattered.</td></tr>
+<tr><td>Blocking store path costs 7 to 14% of a cold prefill</td><td>Mostly</td><td>Proportional overhead of the copy inside the step; faster links shrink it somewhat.</td></tr>
+<tr><td>Prefill cap helps with headroom, hurts when oversubscribed</td><td>Mechanism yes, thresholds no</td><td>Scheduler behaviour is vLLM's, not the card's; where the switch happens depends on pool size and traffic.</td></tr>
+<tr><td>Absolute latencies (3.66 s, 0.21 s, 40 ms)</td><td>No</td><td>Card-specific. Re-measure, then re-run.</td></tr>
+<tr><td>Multi-GPU, NVLink, tensor parallel, MoE models</td><td>Untested</td><td>Not in this setup. KV per token and transfer paths differ.</td></tr>
+</tbody>
+</table>
+
+<h2>How this sits next to the published work</h2>
+
+<p>Continuum (Berkeley) keeps KV across tool calls with a TTL from reload cost and queueing delay and reports large gains on SWE-bench and BFCL. My result disagrees only in scope: on this trace the memoryfulness coefficient is negative and the reload is cheap, so the TTL is zero for 97 percent of pauses, and even forcing it positive keeps the rule within 10 percent of LRU. TokenCake offloads during function calls and partitions GPU memory by agent criticality; its finding that memory-constrained settings gain the most agrees with mine. CacheWise orders evictions by predicted reuse on its own coding traces; my data suggest the tier's size matters more than the eviction order once a tier exists. Ask the Tool (Tsinghua/Alibaba) reads progress from running tools instead of predicting from history and reports a 21 percent cut in p90 after tool calls; its first claim, that history cannot predict duration, matches the falling hazard here, and a progress-signal policy is the obvious next thing to put through this setup.</p>
+
+<p>Three open proposals would consume a resume prediction: vLLM RFC #57103 (Programmable KV Cache), vLLM Router #285 (Progress-TTL) and SGLang RFC #24656 (Agent-Aware KV Cache). I am posting these results in those threads, with LRU plus an adequately sized host tier as the baseline any new policy should beat.</p>
+
+<h2>Limits</h2>
+
+<ul>
+  <li>One trace source. TraceLab comes from one lab and 71 developers; tests, builds and installs are under 3 percent of calls; tool arguments are stripped, so deadlines were inferred statistically.</li>
+  <li>One model, one GPU. Llama 3.1 8B in FP8 on a single RTX 4090 over PCIe 4.0. Section 5 says what transfers.</li>
+  <li>An 8 GB host tier on this machine, so the 20 and 40 GB regimes were tested on a scaled-down workload; the full-scale 20 GB regime is simulator-only.</li>
+  <li>Contexts scaled so the 99th-percentile session peaks at 32K tokens. Real Claude contexts reach 1M.</li>
+  <li>The policy comparison is simulator-only. The engine runs cover the three levers, three seeds for two of them and one seed for the rest.</li>
+</ul>
+
+<h2>Open questions</h2>
+
+<ol>
+  <li>Why the native connector does not improve the tail at 32 sessions when it does at 16. Three untested candidates: it keeps GPU blocks referenced until asynchronous copies finish; it loads before scheduling; it moves 16-token blocks rather than 256-token chunks.</li>
+  <li>Why LMCache's host tier served fewer reloads than modelled (70 against 184 GiB at 32 sessions). Chunk-level LRU, where an evicted early chunk makes the rest of a prefix unusable, is one candidate.</li>
+  <li>Whether a memory-aware cap would keep the cap's benefit without its cost under oversubscription.</li>
+</ol>
+
+<p class="sources">Data: TraceLab v0.0.2 (Zhu, Jacob, Ma, Pan, Wang, Krishnamurthy and Kasikci, SyFI Lab, University of Washington; <a rel="nofollow" href="https://arxiv.org/abs/2606.30560">arXiv 2606.30560</a>), CC BY 4.0. Papers discussed: Continuum <a rel="nofollow" href="https://arxiv.org/abs/2511.02230">arXiv 2511.02230</a>; TokenCake <a rel="nofollow" href="https://arxiv.org/abs/2510.18586">arXiv 2510.18586</a>; CacheWise <a rel="nofollow" href="https://arxiv.org/abs/2606.16824">arXiv 2606.16824</a>; Ask the Tool <a rel="nofollow" href="https://arxiv.org/abs/2609.18849">arXiv 2609.18849</a>. Code and tables available on request.</p>
+
+<script>
+(function(){
+  var root=document.currentScript.parentNode;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* reveal charts once when scrolled into view */
+  var figs=root.querySelectorAll('figure.viz');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.3});
+    figs.forEach(function(f){io.observe(f);});
+  }else{figs.forEach(function(f){f.classList.add('in');});}
+
+  /* ---------- Figure 1: hero ---------- */
+  var hero=root.querySelector('#tp-hero');
+  if(hero){
+    var S=[
+      {name:'Cache stays on GPU',ms:40,px:3,color:'var(--gpu)',msg:'Nobody needed the memory. The cache is still on the GPU when the agent returns.',note:'GPU prefix hit'},
+      {name:'Cache moved to host memory',ms:210,px:14,color:'var(--host)',msg:'Other sessions needed the memory. The cache was copied to host memory and comes back over PCIe.',note:'reload of 32K tokens over PCIe 4.0'},
+      {name:'Cache dropped',ms:3660,px:250,color:'var(--bad)',msg:'No host tier. The cache was thrown away and the whole context is recomputed.',note:'full prefill of 32K tokens'}
+    ];
+    var kv=hero.querySelector('#tp-hero-kv'),others=hero.querySelectorAll('#tp-hero-others .other'),head=hero.querySelector('#tp-hero-head'),
+        wait=hero.querySelector('#tp-hero-wait'),num=hero.querySelector('#tp-hero-num'),msg=hero.querySelector('#tp-hero-msg'),note=hero.querySelector('#tp-hero-note'),
+        btns=hero.querySelectorAll('.ctl button[data-s]'),play=hero.querySelector('#tp-hero-play');
+    var scen=0,playing=!reduce,t0=null,raf=null,T=7000;
+    function fmt(ms){return ms>=1000?(ms/1000).toFixed(2)+' s':Math.round(ms)+' ms';}
+    function setBtn(){btns.forEach(function(b){b.setAttribute('aria-pressed',(+b.dataset.s===scen)?'true':'false');});}
+    function frame(now){
+      if(t0===null)t0=now;
+      var t=(now-t0)%T, s=S[scen];
+      /* phase 1: 0-900 prompt; 2: 900-3300 tool runs; 3: 3300-5300 wait counts; 4: hold */
+      var x;
+      if(t<900){x=40+100*(t/900);kv.style.opacity=t>200?1:0;kv.style.transform='';others.forEach(function(o){o.style.opacity=0;o.style.transform='translateY(-14px)';});wait.style.transform='scaleX(0)';num.textContent='0 ms';msg.textContent='The agent sends its prompt. Its KV cache is built on the GPU.';note.textContent='';}
+      else if(t<3300){x=150+280*((t-900)/2400);
+        var p=(t-900)/2400;
+        others.forEach(function(o,i){var on=p>0.25+i*0.08;o.style.opacity=on?1:0;o.style.transform=on?'translateY(0)':'translateY(-14px)';});
+        if(scen===1){kv.style.transform=p>0.6?'translate(370px,0)':'';kv.style.opacity=1;}
+        else if(scen===2){kv.style.opacity=p>0.6?0:1;kv.style.transform='';}
+        else{kv.style.transform='';kv.style.opacity=1;}
+        msg.textContent=p<0.3?'The agent calls a tool. The cache sits idle while the tool runs.':(scen===0?'Other sessions arrive, but there is room. The cache stays.':scen===1?'Other sessions need the memory. The idle cache is moved to host memory.':'Other sessions need the memory. With no host tier, the idle cache is dropped.');
+        wait.style.transform='scaleX(0)';num.textContent='0 ms';}
+      else{x=440;
+        var q=Math.min(1,(t-3300)/2000);
+        if(scen===1){kv.style.transform=q>0.5?'':'translate(370px,0)';kv.style.opacity=1;}
+        else if(scen===2){kv.style.opacity=q>0.9?1:0;}
+        wait.style.transform='scaleX('+q+')';wait.setAttribute('width',s.px);wait.setAttribute('fill',s.color);
+        num.textContent=fmt(s.ms*q);msg.textContent=s.msg;note.textContent=s.note;}
+      head.setAttribute('x1',x);head.setAttribute('x2',x);
+      if(playing)raf=requestAnimationFrame(frame);
+    }
+    function start(){if(raf)cancelAnimationFrame(raf);t0=null;raf=requestAnimationFrame(frame);}
+    function still(){ /* static end state for reduced motion or pause */
+      if(raf)cancelAnimationFrame(raf);var s=S[scen];
+      kv.style.opacity=1;kv.style.transform='';others.forEach(function(o){o.style.opacity=scen===0?0:1;o.style.transform='translateY(0)';});
+      head.setAttribute('x1',440);head.setAttribute('x2',440);
+      wait.style.transform='scaleX(1)';wait.setAttribute('width',s.px);wait.setAttribute('fill',s.color);
+      num.textContent=fmt(s.ms);msg.textContent=s.msg;note.textContent=s.note;
+    }
+    btns.forEach(function(b){b.addEventListener('click',function(){scen=+b.dataset.s;setBtn();playing?start():still();});});
+    play.addEventListener('click',function(){playing=!playing;play.textContent=playing?'Pause':'Play';play.setAttribute('aria-pressed',playing?'true':'false');playing?start():still();});
+    if(playing){start();}else{play.textContent='Play';play.setAttribute('aria-pressed','false');still();}
+    /* auto-advance scenarios while playing */
+    setInterval(function(){if(playing){scen=(scen+1)%3;setBtn();start();}},T);
+  }
+
+  /* ---------- Figure 2: two worlds ---------- */
+  var haz=root.querySelector('#tp-haz');
+  if(haz){
+    var H=[{l:280,r:44,n:'54 s',note:'after 4.4 s of waiting'},{l:160,r:92,n:'113 s',note:'after 25 s of waiting'},{l:30,r:294,n:'361 s',note:'after 146 s of waiting'}];
+    var lb=haz.querySelector('#tp-haz-lbar'),rb=haz.querySelector('#tp-haz-rbar'),rn=haz.querySelector('#tp-haz-rnum'),rnote=haz.querySelector('#tp-haz-rnote');
+    haz.querySelectorAll('.ctl button').forEach(function(b){b.addEventListener('click',function(){
+      haz.querySelectorAll('.ctl button').forEach(function(o){o.setAttribute('aria-pressed','false');});b.setAttribute('aria-pressed','true');
+      var d=H[+b.dataset.k];lb.setAttribute('width',d.l);rb.setAttribute('width',d.r);rn.textContent=d.n;rnote.textContent=d.note;
+    });});
+  }
+
+  /* ---------- Figure 5: waffle ---------- */
+  var comp=root.querySelector('#tp-comp');
+  if(comp){
+    var W=[
+      {lo:47,hi:100,lab:'0.75× the pool',l1:'at least 47 of the 100 slowest are full recomputes,',l2:'up to all 100, across ten runs',note:'full-scale 32K workload, 8 GB host tier',note2:''},
+      {lo:15,hi:72,lab:'1.9× the pool',l1:'at least 15 of the 100 slowest are full recomputes,',l2:'up to 72, across three seeds',note:'scaled workload, 4 GB host tier',note2:'seed 0: 70 to 72; seeds 1 and 2: 15 to 20'},
+      {lo:4,hi:28,lab:'3.7× the pool',l1:'at least 4 of the 100 slowest are full recomputes,',l2:'up to 28',note:'scaled workload, 8 GB host tier',note2:''}
+    ];
+    var g=comp.querySelector('#tp-waffle'),ns='http://www.w3.org/2000/svg',cells=[];
+    for(var i=0;i<100;i++){var r=document.createElementNS(ns,'rect');var cx=i%10,cy=Math.floor(i/10);r.setAttribute('x',cx*26);r.setAttribute('y',cy*22+8);r.setAttribute('width',22);r.setAttribute('height',18);r.setAttribute('rx',3);g.appendChild(r);cells.push(r);}
+    var wlab=comp.querySelector('#tp-comp-lab'),wl1=comp.querySelector('#tp-comp-l1'),wl2=comp.querySelector('#tp-comp-l2'),wnote=comp.querySelector('#tp-comp-note'),wnote2=comp.querySelector('#tp-comp-note2');
+    function show(k){var d=W[k];cells.forEach(function(c,i){c.setAttribute('fill',i<d.lo?'var(--bad)':i<d.hi?'var(--hostlight)':'var(--gpulight)');});wlab.textContent='Host tier at '+d.lab;wl1.textContent=d.l1;wl2.textContent=d.l2;wnote.textContent=d.note;wnote2.textContent=d.note2;}
+    comp.querySelectorAll('.ctl button').forEach(function(b){b.addEventListener('click',function(){comp.querySelectorAll('.ctl button').forEach(function(o){o.setAttribute('aria-pressed','false');});b.setAttribute('aria-pressed','true');show(+b.dataset.k);});});
+    show(1);
+  }
+})();
+</script>
+
+</div>
