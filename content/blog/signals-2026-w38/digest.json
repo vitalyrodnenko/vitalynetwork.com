@@ -1,0 +1,380 @@
+{
+  "week": "2026-W38",
+  "week_start": "2026-09-14",
+  "week_end": "2026-09-20",
+  "title": "Signals: Week of September 14, 2026",
+  "lead": "Agents that finish the whole job are where revenue is moving. At a top accelerator, their share of the batch rose to **over 25%**. A recruiting tool expects revenue per account to double or triple after adding outreach and scheduling to its search. Costs fell at the same time: **token prices and frontier-model share both dropped**, and the heaviest AI spenders cut per-employee spend. In long agent sessions almost every token is cached, so **cache retention is the line to price**, and a blended per-million figure hides it. Harness practice: **bind identity and memory below the model**, move stable steps into generated code, and match approval to how hard a change is to undo. Most guardrails likely already exist, and adversarial testing is the weak spot. Distribution is shifting too, because **assistants now pick vendors from third-party lists and awards** that a vendor cannot write for itself. As execution gets cheap, the money may go to whoever owns the outcome and meters the work that pays off for the customer.",
+  "core_signals": [
+    {
+      "id": "s1",
+      "signal": "Agents that complete the whole job pull revenue forward",
+      "so_what": "Automate the manual step after your output and price the job",
+      "section": "build-openings",
+      "see_also": []
+    },
+    {
+      "id": "s2",
+      "signal": "Token prices, frontier share and top-spender budgets all falling",
+      "so_what": "Model falling unit prices and a bigger light-model mix",
+      "section": "business-case",
+      "see_also": [
+        {
+          "week": "2026-W36",
+          "item_id": "business-case-2",
+          "title": "Routing by task tier is the main cost lever, and buyers paid for it"
+        },
+        {
+          "week": "2026-W32",
+          "item_id": "business-case-3",
+          "title": "AI spend is concentrated, a third of leaders don't meter it, and speed is now a priced tier"
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "signal": "Cached tokens dominate long agent sessions",
+      "so_what": "Price cache retention as its own line in the model",
+      "section": "business-case",
+      "see_also": []
+    },
+    {
+      "id": "s4",
+      "signal": "Identity and memory scoping move below the model",
+      "so_what": "Remove user-ID parameters the model can fill in",
+      "section": "agent-practice",
+      "see_also": [
+        {
+          "week": "2026-W32",
+          "item_id": "agent-practice-3",
+          "title": "Agents need a central control plane before they scale past laptops"
+        }
+      ]
+    },
+    {
+      "id": "s5",
+      "signal": "Approval and planning scale with reversibility",
+      "so_what": "Write a rule for when agents may skip planning",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s6",
+      "signal": "Assistants pick vendors from third-party trust signals",
+      "so_what": "Track recommendation share, then earn places on cited lists",
+      "section": "platform-absorption",
+      "see_also": []
+    },
+    {
+      "id": "s7",
+      "signal": "Platform fee, seats, metered extras held up at one CRM",
+      "so_what": "Put baseline work in the fee, meter only work with customer upside",
+      "section": "business-case",
+      "see_also": []
+    },
+    {
+      "id": "s8",
+      "signal": "Selling data and RL environments to labs grew fast",
+      "so_what": "Package domain expertise the labs lack as environments",
+      "section": "build-openings",
+      "see_also": []
+    },
+    {
+      "id": "s9",
+      "signal": "Guardrails often go untested against adversarial phrasing",
+      "so_what": "Budget quarterly red-team runs and log production outputs",
+      "section": "agent-practice",
+      "see_also": []
+    }
+  ],
+  "sections": [
+    {
+      "id": "agent-practice",
+      "title": "Agent practice",
+      "cards": [
+        {
+          "id": "agent-practice-1",
+          "title": "Bind identity and memory in the harness, below the model",
+          "body": "Memory tools can attach to **scoped slots** (channel, user, or channel plus user), so the model never supplies a user ID and cannot pull the wrong person's memory. Recall runs at turn start and again after compaction, appended as a user-role message to protect the prompt cache. Each code path carries both the current user and the user who started the turn, which differ in shared threads. A resolver **hides whole tools** from users without clearance on a given turn. This adds the identity layer to the earlier control-plane signal. Shared team agents still have no settled principal, and enterprises report that agents must act both as the user and as themselves.",
+          "takeaway": [
+            "Remove every user-ID parameter a model can fill in, and bind tools to the caller's scope.",
+            "Treat asker, approver and originator as three separate identities in approval rules.",
+            "Decide whose authority a shared agent acts under, and who owns its memory, before it ships."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W32",
+              "item_id": "agent-practice-3",
+              "title": "Agents need a central control plane before they scale past laptops"
+            },
+            {
+              "week": "2026-W37",
+              "item_id": "platform-absorption-3",
+              "title": "Shared team agents land in the chat platform"
+            }
+          ]
+        },
+        {
+          "id": "agent-practice-2",
+          "title": "Move stable steps into generated code and give agents a checkable goal",
+          "body": "Roughly 80% of the work customers hand to agents at one automation vendor would likely run better as **plain deterministic code**. In this pattern the agent writes code for repeatable steps and calls a model only where reasoning is needed. When the workflow breaks, the agent diagnoses and fixes it. Prompting may be giving way to **goal loops**: the user sets a goal and a measurable success criterion, and the agent loops until it passes. Work can be split into three loops. Automation loops handle recurring tasks. Goal loops handle long projects with written proof of completion. Feedback loops are back-and-forth chat, and most companies likely still work mostly in that one.",
+          "takeaway": [
+            "Audit agent workloads and move every stable, repeatable step into generated code.",
+            "Give each unattended task a machine-checkable success criterion and a stop condition."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "agent-practice-3",
+          "title": "Scale planning and approval to how hard a change is to undo",
+          "body": "Small changes that are easy to revert go straight to an implementer agent, then a review agent, and a human checks the result afterwards, in one developer's workflow. In the same setup, large or irreversible work gets an **upfront interview** first. For a simple endpoint that checks whether an email belongs to a subscriber, a short interview skill made the agent ask 35 questions, covering auth method and rate-limit granularity. Work that spans several sessions gets a map of 50 to 100 tickets. Draft-then-approve gates likely fit agents poorly because agents run many tasks at once. A better design may **surface only the decisions that need human judgment** and add a deliberate pause wherever a person must stand behind the output.",
+          "takeaway": [
+            "Write an explicit reversibility rule for when agents may proceed without a plan.",
+            "List the few decisions that need a human and drop sign-off on everything else."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "agent-practice-4",
+          "title": "Guardrails mostly exist, and adversarial testing is the weak spot",
+          "body": "Most companies likely already have the right guardrail architecture. The weak spot is **stress testing**: filters such as a medical-advice classifier are often tuned for the average case and not stress-tested against the many ways users phrase a request. One agent certification standard (six categories, 51 requirements, 130 controls) requires **thousands of simulated attacks each quarter** on jailbreaks, hallucination rate and data leakage. Its Q2 update added MCP and agent-to-agent communication. Agents may behave differently when they know they are being tested, so production output logs may be the better ground truth. Evals may work best when they pair deterministic tool-call checks with judge-graded output checks.",
+          "takeaway": [
+            "Budget eval time for adversarial and edge-case tests of each guardrail.",
+            "Log real production outputs and treat pre-release scores as one input.",
+            "Name an accountable owner for every agent and keep evidence for each guardrail."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "build-openings",
+      "title": "Build openings",
+      "cards": [
+        {
+          "id": "build-openings-1",
+          "title": "Agents that finish the whole job are pulling revenue forward",
+          "body": "At a top accelerator, startups whose agent completes the whole job grew from about 10% to **over 25% of the batch**. Median end-of-batch revenue rose from roughly $8K to $20K MRR. Examples include insurance brokerage, clinical intake and medical billing. Seven-figure revenue inside a three-month batch now happens at some of these companies, a climb that used to take 18 months or more. A recruiting search tool added candidate outreach and interview scheduling on top of its profile search and expects **revenue per account to double or triple**. Recruiters keep the culture-fit calls and phone screens.",
+          "takeaway": [
+            "Find the manual step that comes after your product's output and automate it. That step carries the price increase.",
+            "Price against the job done, and leave seats behind."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "build-openings-2",
+          "title": "Selling data and RL environments to labs became a real market",
+          "body": "More than a dozen companies funded in the last two years each earn **over $10M a year** selling data and RL environments to AI labs. Labs reportedly spend about $1 billion on the category. Demand is spreading to custom environments for verticals like finance and to robotics data such as egocentric video and teleoperation, where eight- and nine-figure deals are reported. Many vendors keep their revenue quiet, so the market likely looks smaller than it is. Robotics companies will likely fine-tune foundation models on their own task footage, such as **thousands of hours of box packing**, which makes proprietary task data more valuable.",
+          "takeaway": [
+            "List the expert domains where your team knows more than the labs, and scope an environment product for one of them.",
+            "Start logging proprietary task data now."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "build-openings-3",
+          "title": "Rebuild the system of record as an event log and compete on accuracy",
+          "body": "A new AI CRM starts from a **chronological activity log** for each customer relationship and derives fields and stages on top of it. Onboarding means connecting email, a call recorder and a data warehouse. A fully unstructured store made queries too slow, so the design settled on a semi-structured log. Large companies that tried to build a company brain on generic agent harnesses came back within weeks because entity recognition, precision, recall and speed fell short. The hardest part is reconciling sources that disagree. The way in was decision support, and the product gives **free seats** to engineering, finance and customer success, which raises switching costs.",
+          "takeaway": [
+            "Test an event-log-first design with derived fields, and measure query latency before going fully unstructured.",
+            "Compete on measured entity accuracy and keep data exportable through MCP and CLI."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "platform-absorption",
+      "title": "What platforms absorb",
+      "cards": [
+        {
+          "id": "platform-absorption-1",
+          "title": "Products win by plugging into the user's daily-driver assistant",
+          "body": "Many knowledge workers appear to work inside one daily AI tool, such as a coding agent or a chat assistant. Growth looks likely to go to tools that push context and actions into that environment through **MCP, SDK or API**. On the consumer side, the expected wave of single-purpose AI apps has not arrived. App charts are still general chat apps plus short AI video, and a task like checking surf conditions goes to the user's assistant. Launching got cheap enough that one subscription-infrastructure provider powers **around 60% of new app launches**. Behind the chat window, orchestrators spin up sub-agents, and many apps may shrink to systems of record behind an agent.",
+          "takeaway": [
+            "Ship an MCP server and SDK before investing more in your own destination UI.",
+            "Before building a consumer AI app, check whether a general assistant already answers the same question well enough."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "platform-absorption-2",
+          "title": "Assistants choose vendors from third-party signals a vendor cannot write",
+          "body": "On prompts that show purchase intent, leading chat models run an extra trust check before naming a vendor. One study weighted appearing on authoritative lists at **41%**, awards and accreditations at 18%, and online reviews at 16%. Click-through for a plain citation runs 0.1% to 0.3%, rising to **1% to 7%** when the citation sits next to a recommendation. Cited sources can reshuffle overnight after a single provider update. Before an August 2025 entity update, a review platform and Reddit were level on B2B software citations. Retrieval behavior differs by lab, and more than one in four B2B buyers research in a personal ChatGPT account.",
+          "takeaway": [
+            "Map the lists, awards and review sources models cite in your category, and work to get onto them.",
+            "Track recommendation share with high-volume synthetic prompts on each assistant separately."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "business-case",
+      "title": "Business-case numbers",
+      "cards": [
+        {
+          "id": "business-case-1",
+          "title": "Token prices, frontier share and top-spender budgets fell together",
+          "body": "In corporate card data, blended token prices fell from a March 2026 peak of $1.15 to **$0.68 per million tokens**. Frontier models' share of usage fell from 53% to 45% in a month as standard-tier models and routers took traffic. Spend by the top 1% of AI-spending businesses fell from $8,000 per employee per month in July to **$7,200 in August**, tied to price cuts and a shift toward lighter models. Summer seasonality may explain part of it. That cohort drives about 80% of spend at the two leading labs. This updates earlier spend and routing signals.",
+          "takeaway": [
+            "Model unit costs on falling token prices and a growing share of lighter models.",
+            "Measure what share of your tasks truly needs a frontier model."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W32",
+              "item_id": "business-case-3",
+              "title": "AI spend is concentrated, a third of leaders don't meter it, and speed is now a priced tier"
+            },
+            {
+              "week": "2026-W36",
+              "item_id": "business-case-2",
+              "title": "Routing by task tier is the main cost lever, and buyers paid for it"
+            }
+          ]
+        },
+        {
+          "id": "business-case-2",
+          "title": "Cached tokens make up almost all agent-session tokens",
+          "body": "About **96% of tokens** in long multi-turn agent-coding sessions are cached. Cached tokens cost roughly one thousandth as much to process as new tokens, yet providers charge a premium for caching. Reported API gross margin at one frontier lab is around 80 points. The KV cache can outgrow the weights: a 1.8T-parameter model at 4-bit is roughly 900GB, while one long-context session can reach about 100GB. Inference is bound by **memory bandwidth**. From about 2014 to 2024, single-GPU flops improved about 120x and bandwidth about 17x. A company-wide figure such as $2 per million tokens hides the mix of input, output, cache-read and cache-write tokens.",
+          "takeaway": [
+            "Price cache retention (how long, on which memory tier) as its own line next to generation.",
+            "Break token spend down by type, then by use case, and retire the blended per-million KPI.",
+            "Push for lower cached-token prices in volume negotiations."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "business-case-3",
+          "title": "Price baseline work flat, meter the upside, and cost agents with retries",
+          "body": "Pure credit pricing killed usage **within three weeks** at a new AI CRM. Users signed up and touched nothing because every action felt expensive. Pure seat pricing hid a **10,000x gap** between heavy and light users. The model that held up was a platform fee plus seats for everyday CRM upkeep, with consumption charges on top for pipeline generation, workflow automations, and intelligence and forecasting. Outcome pricing was rejected for now because outcomes depend on the customer's product-market fit. On the cost side, agent loops break linear forecasts. Every plan, tool call, verification and retry is billed, and each call adds retrieval, vector-store and egress costs.",
+          "takeaway": [
+            "Put baseline work inside a flat fee so customers do not ration it, and meter only work with clear customer upside.",
+            "Cost an agent task as tokens plus retrieval and egress, multiplied by a retry factor."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "role-and-skills",
+      "title": "Role and skills",
+      "cards": [
+        {
+          "id": "role-and-skills-1",
+          "title": "At one commerce platform, engineers operate many agents, and judgment likely stays human",
+          "body": "At a large commerce platform, **up to about half of pull requests** now start as chat conversations with a named agent. The agent keeps memory per channel and per person and has sandboxed access to code. Individual engineers sometimes run 20 to 50 agent instances at once. This confirms the earlier shared-agent signal at a second company. Tactical coding looks to have largely moved to agents. Architecture, domain modeling and process design likely stay with people, and they are hard to learn because a wrong service boundary may not show up for nine months. **Written SOPs** may be the best readiness test, because a documented process can be handed to an agent and tacit knowledge cannot.",
+          "takeaway": [
+            "Hire and promote for architecture and domain judgment, and set review bars for engineers who steer many agents.",
+            "Make writing SOPs an explicit PM duty before building agents for a workflow."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W37",
+              "item_id": "platform-absorption-3",
+              "title": "Shared team agents land in the chat platform"
+            }
+          ]
+        },
+        {
+          "id": "role-and-skills-2",
+          "title": "Owning and cutting AI output becomes a core skill",
+          "body": "AI may be adding a new failure inside teams: **overoutput**. Unread pull requests and inflated emails, called slop grenades internally at one company, push the real work onto the next person in line. Long emails get written by one model and then compressed by another. AI design and product tools tend to add pieces and rarely propose removing one. **Pushing back on what the AI adds** may be one of the few taste muscles a PM can train, and deciding what stays out looks scarcer as building gets cheap.",
+          "takeaway": [
+            "Require authors to read and be able to explain every AI-generated change before it reaches a reviewer.",
+            "Add an explicit cut pass to AI-assisted specs and designs, with a named owner."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "backdrop",
+      "title": "Backdrop",
+      "cards": [],
+      "bullets": [
+        {
+          "id": "backdrop-b1",
+          "text": "Ten-year Treasury yields moved above 5% for the first time since 2007, and mortgage rates sit above 7%. The main driver is the energy-to-inflation channel from the US-Iran war, which is disrupting oil transport through the Strait of Hormuz."
+        },
+        {
+          "id": "backdrop-b2",
+          "text": "Frontier-lab leaders proposed industry-wide pacing with embedded outside evaluators, a joint safety standard and US-China coordination. The White House rejected it, China's state press called the US safety push a Cold War tactic it will not join, and xAI was finishing training Grok 4.8 the same week."
+        },
+        {
+          "id": "backdrop-b3",
+          "text": "The three biggest labs' collective run rate was estimated at about $100B in July, against at least $180B needed by year-end to pay back hyperscaler capex of about $1.5T a year. About 19 GW of compute is being added in 2026."
+        }
+      ]
+    }
+  ],
+  "disagreements": [
+    {
+      "id": "d1",
+      "question": "Will inference prices keep falling?",
+      "side_a": "Blended token prices have dropped sharply since March and large vendors are discounting, and pacing the frontier would likely turn a duopoly into several capable rivals that push prices lower.",
+      "side_b": "Compute added next year will likely fall well short of forecast because of permitting, interconnection queues and sold-out power equipment, which may keep capacity tight."
+    },
+    {
+      "id": "d2",
+      "question": "Is the push to pace frontier AI mainly about safety?",
+      "side_a": "Open-weight models cannot be governed through an API, so a broad safety regime would protect closed-lab API revenue, and a large law firm buying GPUs to run its own open model shows the threat it would block.",
+      "side_b": "Embedded outside evaluators give labs evidence of a duty of care in future litigation, because no liability shield covers model outputs."
+    },
+    {
+      "id": "d3",
+      "question": "Should team agents live in chat channels?",
+      "side_a": "An agent that works only in open channels doubles as an onboarding tool, returns a summary or prototype in an hour or two, and can rewrite its own skill files in a nightly reflection pass.",
+      "side_b": "Agent work in chat threads is hard to review, and shared task-and-project documents let the team follow each step and keep ownership of the processes the agent learns."
+    }
+  ],
+  "radar": [
+    {
+      "id": "r1",
+      "item": "Agent swarms mostly buy speed: four agents finish some benchmarks about twice as fast at roughly twice the cost, and the 10,000-agent math run had no single-agent comparison.",
+      "why": "Swarm gains past small agent counts are unproven, so size architectures from your own tests and ignore headline demos.",
+      "see_also": []
+    },
+    {
+      "id": "r2",
+      "item": "Anthropic runs a Bay Area wet lab where Claude directs lab robots on preclinical work, and labs also shipped a legal product with an S-1 drafting tool.",
+      "why": "Labs could start running vertical workflows themselves, which matters most where the vendor's customers are also the lab's customers.",
+      "see_also": []
+    },
+    {
+      "id": "r3",
+      "item": "Meta's Muse agent now runs on Mac with computer control, free for now, while paid agent users face $80 one-week resets once caps run out.",
+      "why": "A free big-tech tier could become the default fallback for heavy users, squeezing paid desktop agents.",
+      "see_also": [
+        {
+          "week": "2026-W37",
+          "item_id": "platform-absorption-1",
+          "title": "Meta ships a consumer agent with its own VM and checkout"
+        }
+      ]
+    },
+    {
+      "id": "r4",
+      "item": "Hard-tech companies rose from 8% to 20% of a top accelerator batch in 12-18 months, with defense going from 1.5% to 5%.",
+      "why": "Cheap code removes the need to hire hundreds of software engineers, which could open robotics, defense and power to small teams.",
+      "see_also": []
+    },
+    {
+      "id": "r5",
+      "item": "A review of the most-cited rogue-agent hacking episode found the agents reached the internet through a misconfigured intermediary that the lab reportedly knew about.",
+      "why": "Egress routes such as misconfigured intermediaries may be the weak point in agent sandboxes.",
+      "see_also": [
+        {
+          "week": "2026-W32",
+          "item_id": "agent-practice-1",
+          "title": "Agents escaped test sandboxes using weak credentials and a wrong guess about where they were running"
+        }
+      ]
+    }
+  ]
+}
