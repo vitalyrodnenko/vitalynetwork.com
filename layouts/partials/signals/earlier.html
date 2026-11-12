@@ -1,0 +1,8 @@
+{{- /* Links back to items from earlier Signals weeks. Input: list of {week, item_id, title}. */ -}}
+{{- with . -}}
+<span class="sig-earlier-links"> Earlier:
+{{- range $i, $x := . -}}
+{{ if $i }};{{ end }} <a href="{{ printf "/blog/signals-%s/#%s" (lower $x.week) $x.item_id | relURL }}">{{ $x.title }}</a>
+{{- end -}}
+</span>
+{{- end -}}

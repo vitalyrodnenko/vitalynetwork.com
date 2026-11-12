@@ -1,0 +1,30 @@
+/* Signals weekly page. Builds on .post-body styles from main.css. */
+.signals .post-body section { margin-bottom: 56px; }
+.signals .post-body h2 { scroll-margin-top: calc(var(--nav-height) + 16px); }
+.signals .sig-lead p { color: var(--text-primary); }
+
+.signals .sig-core table { margin: 24px 0 0; }
+.signals .sig-core th, .signals .sig-core td { text-align: left; vertical-align: top; padding: 12px 12px 12px 0; border-bottom: 1px solid var(--border); }
+.signals .sig-core th { font-weight: 500; color: var(--text-tertiary); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+.signals .sig-core td:first-child { color: var(--text-primary); width: 40%; }
+.signals .sig-core td:last-child { white-space: nowrap; font-size: 14px; }
+.signals .sig-core td p { margin: 0; font-size: inherit; }
+
+.signals .sig-card { padding: 8px 0 24px; border-bottom: 1px solid var(--border-subtle); scroll-margin-top: calc(var(--nav-height) + 16px); }
+.signals .sig-card:last-child { border-bottom: 0; }
+.signals .sig-takeaway { margin: 8px 0 0; padding: 16px 20px; background: var(--bg-alt); border-left: 2px solid var(--accent); border-radius: 4px; }
+.signals .sig-takeaway-label { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.signals .sig-takeaway ul { margin: 0; font-size: 16px; padding-inline-start: 1.25rem; }
+.signals .sig-takeaway li { margin-bottom: 6px; }
+.signals .sig-takeaway li p, .signals .sig-bullets li p, .signals .sig-radar li p, .signals .sig-disagree li p { display: inline; margin: 0; font-size: inherit; }
+
+.signals .sig-earlier, .signals .sig-earlier-links { font-size: 14px; color: var(--text-tertiary); }
+.signals .sig-earlier { margin: 12px 0 0; }
+
+.signals .sig-question h3 { margin-top: 24px; }
+
+@media (max-width: 640px) {
+  .signals .sig-core thead { display: none; }
+  .signals .sig-core tr { display: block; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .signals .sig-core td { display: block; width: auto !important; padding: 2px 0; border: 0; white-space: normal !important; }
+}

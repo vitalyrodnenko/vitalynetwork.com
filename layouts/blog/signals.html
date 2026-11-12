@@ -1,0 +1,96 @@
+{{/* Weekly Signals page. Data comes from the bundle's digest.json (written by `thecurrent export`). */}}
+{{ define "main" }}
+{{ $d := dict }}
+{{ with .Resources.Get "digest.json" }}{{ $d = . | transform.Unmarshal }}{{ end }}
+{{ $css := resources.Get "css/signals.css" | minify | fingerprint }}
+<link rel="stylesheet" href="{{ $css.RelPermalink }}">
+{{ $titles := dict }}
+{{ range $d.sections }}{{ $titles = merge $titles (dict .id .title) }}{{ end }}
+<div class="container container-narrow signals">
+    <div class="post-header">
+        <div class="post-series">Signals</div>
+        <h1>{{ .Title }}</h1>
+        <div class="post-meta">
+            <span>{{ .Date.Format "Jan 2, 2006" }}</span> · <span>{{ default 1 .Params.minutes }} Min Read</span>
+        </div>
+        {{ partial "article-tags.html" (dict "Page" . "Centered" true) }}
+    </div>
+
+    <div class="post-body">
+        <section class="sig-lead">
+            <h2 id="the-week">The week in one read</h2>
+            {{ $d.lead | markdownify | safeHTML }}
+        </section>
+
+        {{ with $d.core_signals }}
+        <section class="sig-core">
+            <h2 id="core-signals">Core signals</h2>
+            <table>
+                <thead><tr><th>Signal</th><th>So what</th><th>More in</th></tr></thead>
+                <tbody>
+                {{ range . }}
+                <tr id="{{ .id }}">
+                    <td>{{ .signal | markdownify }}</td>
+                    <td>{{ .so_what | markdownify }}{{ partial "signals/earlier.html" .see_also }}</td>
+                    <td>{{ with .section }}<a href="#{{ . }}">{{ index $titles . }}</a>{{ end }}</td>
+                </tr>
+                {{ end }}
+                </tbody>
+            </table>
+        </section>
+        {{ end }}
+
+        {{ range $d.sections }}
+        {{ if or .cards .bullets }}
+        <section class="sig-section">
+            <h2 id="{{ .id }}">{{ .title }}</h2>
+            {{ with .bullets }}
+            <ul class="sig-bullets">
+                {{ range . }}<li id="{{ .id }}">{{ .text | markdownify }}</li>{{ end }}
+            </ul>
+            {{ end }}
+            {{ range .cards }}
+            <article class="sig-card" id="{{ .id }}">
+                <h3>{{ .title }}</h3>
+                {{ .body | markdownify | safeHTML }}
+                {{ with .takeaway }}
+                <div class="sig-takeaway">
+                    <div class="sig-takeaway-label">Takeaway</div>
+                    <ul>{{ range . }}<li>{{ . | markdownify }}</li>{{ end }}</ul>
+                </div>
+                {{ end }}
+                {{ with .see_also }}<p class="sig-earlier">{{ partial "signals/earlier.html" . }}</p>{{ end }}
+            </article>
+            {{ end }}
+        </section>
+        {{ end }}
+        {{ end }}
+
+        {{ with $d.disagreements }}
+        <section class="sig-disagree">
+            <h2 id="disagreements">Where people disagree</h2>
+            {{ range . }}
+            <div class="sig-question" id="{{ .id }}">
+                <h3>{{ .question }}</h3>
+                <ul>
+                    <li>{{ .side_a | markdownify }}</li>
+                    <li>{{ .side_b | markdownify }}</li>
+                </ul>
+            </div>
+            {{ end }}
+        </section>
+        {{ end }}
+
+        {{ with $d.radar }}
+        <section class="sig-radar">
+            <h2 id="radar">On my radar</h2>
+            <ul>
+                {{ range . }}
+                <li id="{{ .id }}"><strong>{{ strings.TrimRight "." .item | markdownify }}.</strong> {{ .why | markdownify }}{{ partial "signals/earlier.html" .see_also }}</li>
+                {{ end }}
+            </ul>
+        </section>
+        {{ end }}
+    </div>
+</div>
+{{ end }}

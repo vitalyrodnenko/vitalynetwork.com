@@ -1,0 +1,335 @@
+{
+  "week": "2026-W45",
+  "week_start": "2026-11-02",
+  "week_end": "2026-11-08",
+  "title": "Signals: Week of November 2, 2026",
+  "lead": "Enterprise AI spend is running well past the budgets built for it. Plans assumed growth in seats, but **spend per AI-using enterprise rose 4.7x**, because agents run in parallel and keep working after people log off. Apple and Uber capped AI spend per person. The deeper cost cuts came from the harness: **route each task to the cheapest model that passes its eval**, keep the agent workflow in version control and track cost per merged PR. Model upgrades call for the same discipline. New releases now lift some tasks and regress others, so **per-task evals beat a single score**, and scaffolding built for an older model should be stripped out and retested. Anthropic's S-1 showed where the money sits: 85% gross margin at the model layer, and much less once channel fees, training and staff are paid. For builders, a cheap open-source bounty produced several usable clones of a paid tool, and **mid-tier SaaS with no specialized data looks exposed**. Platforms kept absorbing single-feature products, and search referrals keep shrinking. Models may turn over within a couple of quarters, so the parts worth investing in are **evals, permission rules and cost controls**.",
+  "core_signals": [
+    {
+      "id": "s1",
+      "signal": "Model upgrades now regress some tasks while lifting others",
+      "so_what": "Run per-task evals and prune the harness on every release",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s2",
+      "signal": "Enterprise AI spend scales with the work agents do",
+      "so_what": "Budget per team and per task, with headroom above plan",
+      "section": "business-case",
+      "see_also": []
+    },
+    {
+      "id": "s3",
+      "signal": "Model routing and small models cut cost per task",
+      "so_what": "Build task-level evals first, then route to the cheapest passing model",
+      "section": "business-case",
+      "see_also": []
+    },
+    {
+      "id": "s4",
+      "signal": "Default-deny permissions become the agent trust model",
+      "so_what": "Ship every agent with a free-action list and approval list",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s5",
+      "signal": "Agent workflows defined as versioned, replayable code",
+      "so_what": "Track cost per merged PR by stage before tuning anything",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s6",
+      "signal": "Mid-tier SaaS is cheap enough for customers to clone",
+      "so_what": "Price a clone against any non-critical annual contract",
+      "section": "build-openings",
+      "see_also": []
+    },
+    {
+      "id": "s7",
+      "signal": "Margins thin out layer by layer across the AI stack",
+      "so_what": "Plan for thinner gross margin at every layer of the stack",
+      "section": "business-case",
+      "see_also": []
+    },
+    {
+      "id": "s8",
+      "signal": "Search referrals keep shrinking as assistants answer in-thread",
+      "so_what": "Stress-test growth plans that depend on organic search",
+      "section": "platform-absorption",
+      "see_also": []
+    },
+    {
+      "id": "s9",
+      "signal": "Single-feature AI products lose to platform checkboxes",
+      "so_what": "Ask whether a lab could ship your product as a toggle",
+      "section": "platform-absorption",
+      "see_also": []
+    },
+    {
+      "id": "s10",
+      "signal": "PM hiring bar now includes hands-on model evals",
+      "so_what": "Add a live model-comparison exercise to PM interviews",
+      "section": "role-and-skills",
+      "see_also": []
+    }
+  ],
+  "sections": [
+    {
+      "id": "agent-practice",
+      "title": "Agent practice",
+      "cards": [
+        {
+          "id": "agent-practice-1",
+          "title": "Model upgrades need per-task evals and harness pruning",
+          "body": "New model releases now move tasks in opposite directions, so a single aggregate score hides regressions. A **per-task heat map** that scores analysis and drafting separately catches them, at a legal-AI product with an evals group of 3 engineers and 3 lawyers. Earlier, that product's citation accuracy rose from 70% to 99% on one release with no work by its team, so complex evals only became worth building once releases turned uneven. The harness needs the same check. **Scaffolding built for an older model can hold a newer one back.** One coding-agent harness was roughly 10 times more complex in 2024 than it is now, and a custom skills set built for one company's PMs is being removed without any benchmark of what it still adds.",
+          "takeaway": [
+            "Add a harness-ablation run to your upgrade checklist: remove skills and prompt layers one at a time and keep only what still lifts the eval.",
+            "Score analysis and drafting separately, so a regression in one doesn't hide behind a gain in the other.",
+            "Put durable effort into retrieval quality, and treat orchestration code as disposable."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "agent-practice-2",
+          "title": "Default-deny permissions, with approval at the moment of commitment",
+          "body": "Agents likely work better when they assume they need approval and the owner lists what they may do freely. Free actions include research, lookups, planning documents and reading notes. **Sending email, committing to dates, deleting files, making purchases and contacting outside parties** need sign-off. Users want the same split: the agent does the groundwork and lays out options, and the human decides when it's time to pay, send or book. Trust was the top fear in 22% of about 3,600 power-user messages, and one personal agent posted its owner's finances into a company Slack channel. Replit now sells access limits, isolation, identity and approval controls as a business product.",
+          "takeaway": [
+            "Write each agent's rules as an allow-list of free actions plus an explicit approval list.",
+            "Keep personal and work channels separate for each agent, and test for leaks between them before launch.",
+            "Spend design effort on how the agent presents options and tradeoffs at the approval step."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "agent-practice-3",
+          "title": "Put the agent workflow in version control, then tune it on cost per merged PR",
+          "body": "Writing the agent software lifecycle as versioned code (repos, skills, MCPs, integrations, and triage, spec and implementation stages) makes it testable and revertible, much like Terraform. With that in place, **cost per merged PR fell from about $80 to $15-20**, PR throughput rose about 40% in a month and the revert rate stayed flat, at one company. The waste came from a top-tier model doing triage and from redundant subagents. Replaying past tasks across a grid of models and harnesses shows the trade-off: one model scored 95% correct at $6 per task, another 93% at $2. An LLM judge over stored runs found 54 cases where triage should have spawned a subagent, and agents opened a PR against the workflow to fix it.",
+          "takeaway": [
+            "Build a replayable private benchmark from your own past runs and re-run it before changing routing.",
+            "Check whether your most expensive model sits on a step that doesn't need it.",
+            "Require human review for any change agents propose to the workflow until you can replay it against history."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "agent-practice-4",
+          "title": "Observability when you can't read customer data",
+          "body": "Confidential settings call for a different monitoring design. At a legal-AI vendor whose staff cannot read client documents, quality signals come from three places: eval sets built from estimated workloads, **a very cheap LLM judging whether each problem was solved** (good enough to compare feature-flag variants), and failures that firms anonymize and share so they can be reproduced. Large batch jobs of up to a million cells start with a 10-row trial run, and every output cites its source document. For MCP servers, a tool can ask the calling agent for a short reason at call time, which shows intent without buying an analytics product. Traces are a core company dataset, and spreading them across many tracing vendors may weaken ownership.",
+          "takeaway": [
+            "Add an optional reason field to your MCP tools and log it before you buy MCP analytics.",
+            "Put a sample run and source citations in front of every expensive agent batch job.",
+            "Pick one tracing path you own before adding another vendor."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "build-openings",
+      "title": "Build openings",
+      "cards": [
+        {
+          "id": "build-openings-1",
+          "title": "Mid-tier SaaS is now cheap to clone",
+          "body": "A $10,000 open-source bounty to clone a **$40,000-a-year SaaS tool** drew 69 usable submissions, and about five were good enough that the buyer would pay for them. Evaluating the entries took about two months because the tool had five user roles. The most exposed products look like tools that aren't mission-critical and hold no specialized data. Demand is also coming from inside companies: one enterprise customer of an app-building agent scoped a project at $10 million and spent $250,000, a single reported case. On that platform, early users accepted a roughly 30% failure rate because the alternative was an outsourced app at about $100,000, compared with about $1,000 on the platform.",
+          "takeaway": [
+            "If you sell mid-tier SaaS, move toward specialized data or become the agent-built product yourself.",
+            "Look for workflows that are mostly manual copy-paste, and for buyers who already pay outsourcing shops. Price against that alternative.",
+            "Ship admin and budget controls early so IT lets internal builders in."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "build-openings-2",
+          "title": "Build the primitive agents will need before the demand shows up",
+          "body": "Sandboxes for running model-generated code launched in 2023 and stayed small until summer 2025, when code models improved sharply. They are now a **$300M run-rate business, about a third of revenue** at one infrastructure platform, driven by uses nobody planned for: vibe coding, background agents and RL. The platform reached $1B ARR in about five years. The hard-to-copy part likely sits below the agent: its own file system, container runtime and scheduler pooling 25 GPU clouds. At an app-building platform, it's transactional, reversible file systems, database provisioning and security guardrails. Raw inference alone looks like a commodity with low switching costs.",
+          "takeaway": [
+            "Invest in isolated execution, rollback and state before a model release makes the demand obvious.",
+            "Sell inference as part of a workload bundle, since plain tokens compete only on price."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "build-openings-3",
+          "title": "AI-native vendors win where no incumbent is embedded",
+          "body": "AI-native vendors hold **96% of AI app spend in coding and 95% in finance and operations**. In IT they get only 9%, and incumbents also lead in HR, marketing, customer success and data science, where spend goes to tools already wired into systems of record. Coding was a new capability with no incumbent. A second opening is categories where the switching cost was retraining people. Agents already know existing query languages, so a new transactional database needs no developer retraining. AI clusters have also brought new data-center networking companies for the first time since Arista.",
+          "takeaway": [
+            "Aim at categories with no embedded incumbent. Where one exists, plan to win on integration with the system of record.",
+            "List mature infrastructure categories whose moat was human retraining, and test whether agents remove it."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "platform-absorption",
+      "title": "What platforms absorb",
+      "cards": [
+        {
+          "id": "platform-absorption-1",
+          "title": "Assistants keep users in-thread and referral traffic shrinks",
+          "body": "ChatGPT search volume is reported at **about 20% of Google's**, up from roughly 2% in early readings. Only queries that trigger a web lookup are counted, so the real share is likely higher. Ads are now rolling out in ChatGPT. Google is making AI Mode the default search experience. Its CEO said AI-mode queries slowed search revenue growth because they monetize less. Reddit's CEO said Google no longer sends people at the old rate, and content-led SMB funnels such as HubSpot's and Monday.com's are reported to be hit hard.",
+          "takeaway": [
+            "Stress-test any growth plan that relies on organic search or content funnels.",
+            "Test how your product appears inside chat answers, and build direct and agent-facing channels now."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "platform-absorption-2",
+          "title": "Single-feature AI products are becoming platform checkboxes",
+          "body": "An AI-powered Zapier alternative shut down after Google, OpenAI and others built automation into their own products. Chroma, a top vector database during the RAG boom, is joining Replit in what looks like an acquihire, and its cloud offering will shut down, after vector search became a feature inside many general-purpose databases. **OpenAI's new image model makes animated GIFs in one shot and exports SVG**, which moves icon and loading-animation work into the assistant. Single-app agents hit limits too: Notion Mail closed on September 22 after more than half its users were managing email through agents without opening the inbox.",
+          "takeaway": [
+            "Before building a single-feature AI product, ask whether a lab or a large platform could add it as a toggle.",
+            "Give agents access across systems, and expect the single-app UI to be the first part that becomes redundant."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "business-case",
+      "title": "Business-case numbers",
+      "cards": [
+        {
+          "id": "business-case-1",
+          "title": "Agent spend scales with work done, and per-seat budgets break",
+          "body": "Enterprises spent about **2.5x their 2026 AI budgets**. Plans assumed roughly 1.9x growth on a per-seat basis, and actual spend per AI-using enterprise rose 4.7x, because agents run in parallel and keep working after people leave. One agent session can make around a hundred calls across Slack, email, docs and ticketing tools, which makes usage feel free while spend climbs. Per-person caps are the blunt response: Apple cut its internal daily AI cap for engineers from $300 to $200, and Uber set a $1,500 monthly limit in June. Value may be uneven too, with one person driving up to 100 times the return of the next.",
+          "takeaway": [
+            "Set token budgets per team or project with headroom for several times plan.",
+            "Measure cost per session and per task, and show users what a run costs."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "business-case-2",
+          "title": "Routing and small models cut cost per task, and growth eats the savings",
+          "body": "Routing each task to the cheapest model that clears its quality bar cut AI costs about 10x on one enterprise agent platform, and it only worked with **evals clustered by task**. Moving a B2B recruiting workflow to a small model cut total cost about 70-72%, with better quality. Fine-tuning a smaller model on a stable, high-volume task can match a large one at 20-30x lower cost and 5-10x lower latency. The savings don't last on their own. Shipping about 10 features a month created new cost faster than routing removed it. Buyers also kept moving up the price ladder, with frontier models rising from 35% to 63% of enterprise model spend. Open-source models fell from 6% to 4% of spend but rose from 11% to 19% of tokens.",
+          "takeaway": [
+            "Build task-level evals, set a pass threshold for each task and route to the cheapest model that meets it.",
+            "Put a cost review on every feature release, and cap retries and refresh frequency by default.",
+            "Re-run your highest-volume tasks on the newest small models every release."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "business-case-3",
+          "title": "Anthropic's S-1 shows how margin drains away layer by layer",
+          "body": "Anthropic's filing gives a margin waterfall: **85% gross margin after inference**, about 69% after cloud-marketplace fees (marketplaces carry about 48% of revenue, and their revenue share is booked in sales and marketing), about 28.5% after training and R&D compute, and adjusted operating income of roughly 9.9% for H1 2026, before stock compensation and equity donations. About 80% of Q3 revenue came from models launched in the prior six months. Across the stack, each layer may keep roughly 20-30% in gross margin. Inference providers sit at 25-40% gross margin, and a platform that bundles more of the stack might reach 40-60% over time.",
+          "takeaway": [
+            "Model your AI product at layered margins of 40-60% or lower, and stress-test the plan against each supplier layer's share.",
+            "When you benchmark against a lab's gross margin, add back channel and cloud revenue share.",
+            "Budget cost and evals for moving to a new model generation every quarter or two."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "role-and-skills",
+      "title": "Role and skills",
+      "cards": [
+        {
+          "id": "role-and-skills-1",
+          "title": "The PM bar now includes building evals by hand",
+          "body": "PM candidates for model-driven products should use models daily, have personal test cases and be willing to **build an eval from raw data** themselves. A first eval can be 5 to 20 prompts that stress-test one capability, rated by the PM, and run through the production stack, since serving and filters change what users see. The role has moved from writing requirements to producing whatever artifact fits (prototype, eval, data analysis) and to pulling fast parallel building into one direction. At one company, a shared repo of about 31 skills now serves 60-70 PMs. It targets basics they skip, such as Slack triage, org lookup and launch checklists.",
+          "takeaway": [
+            "Add a live exercise to PM interviews: compare two models on a task the candidate cares about and say what to measure.",
+            "Have every PM write a 20-prompt eval for their feature this quarter.",
+            "Automate the PM chores that get dropped before building showpiece workflows."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "role-and-skills-2",
+          "title": "Work slop moves the thinking cost to the reader",
+          "body": "Work slop is output where the sender skipped the thinking and the cost moved to the reader. In one study, **about 40% of U.S. desk workers** had received such work in the past month, at a cost of close to two hours each. In a survey of 6,000 workers, almost 70% had shipped work without reading it. The same generic prompt run through three leading models gave very similar drafts, so the scarce input is the person's own view, written down before they open the tool. Reviews at the outline and first section keep fixes cheap. A polished end-to-end draft invites shipping it out of sunk cost.",
+          "takeaway": [
+            "Add review norms: the sender can defend every sentence, has read all of it, and can name what only they contributed.",
+            "Ask people to write their own view before prompting, and set review checkpoints early in agent-drafted work."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "backdrop",
+      "title": "Backdrop",
+      "cards": [],
+      "bullets": [
+        {
+          "id": "backdrop-b1",
+          "text": "Data centers: voters rejected projects in all but one of 41 local ballot measures, and AI data center stocks such as CoreWeave, Applied Digital and Nebius fell after the election. Power delivery and liquid cooling now cap new GPU capacity, with Vera Rubin racks needing about 230 kW each."
+        },
+        {
+          "id": "backdrop-b2",
+          "text": "Funding: Isomorphic Labs is reportedly in talks to raise $5B at a $50B valuation, with no drug in human trials yet."
+        },
+        {
+          "id": "backdrop-b3",
+          "text": "Regulation: China reportedly blocked SoftBank's $5.4B purchase of ABB's robotics unit over robotics-data concerns. The block is not officially confirmed."
+        }
+      ]
+    }
+  ],
+  "disagreements": [
+    {
+      "id": "d1",
+      "question": "Will automating a task let teams move it to a cheaper model?",
+      "side_a": "Yes: routing to the cheapest passing model and switching workflows to small models have already cut costs sharply while holding or improving quality.",
+      "side_b": "No: competitors keep paying for the smartest model to win, and enterprise spend has shifted toward frontier models."
+    },
+    {
+      "id": "d2",
+      "question": "Is agent memory a source of lock-in?",
+      "side_a": "Yes: memory builds with use, so switching tools loses accumulated context.",
+      "side_b": "No: all but one of the top 15 agents tested exported everything they stored about the user as a Markdown file on request."
+    },
+    {
+      "id": "d3",
+      "question": "How fast will agents spread across whole enterprises?",
+      "side_a": "Slowly: fewer than 1% of Fortune 500 companies scale agents across entire departments, and organization-wide scaling may stay under 5% through 2028.",
+      "side_b": "Fast: labs are pitching agents as workers with company access and context, and Replit's engineers nearly tripled code output in H1 2026 with incidents flat."
+    }
+  ],
+  "radar": [
+    {
+      "id": "r1",
+      "item": "Agentic commerce at Shopify: agent traffic up 2.6x and orders up 3.3x year over year, from a small base.",
+      "why": "Product data fed to agents converts about 2x better than general AI search. Structured catalogs may decide who gets surfaced.",
+      "see_also": []
+    },
+    {
+      "id": "r2",
+      "item": "Labs are buying the agent product layer: Meta bought Conductor and OpenAI agreed to buy Pierre.",
+      "why": "This suggests labs think the model alone isn't enough, which puts agent orchestration and code hosting in their path.",
+      "see_also": []
+    },
+    {
+      "id": "r3",
+      "item": "Procurement agents are starting to run software buying, from setting criteria through RFP to recommendation.",
+      "why": "Products may need to be readable by buyer agents as well as humans.",
+      "see_also": []
+    },
+    {
+      "id": "r4",
+      "item": "Persistent agent VMs may cost $20 or more per user per month, against flat $30-50 plans.",
+      "why": "xAI called GrokBot's serving cost unsustainable. Flat pricing may break for heavy users.",
+      "see_also": []
+    },
+    {
+      "id": "r5",
+      "item": "A frontier model's useful commercial life may be only three to six months.",
+      "why": "If so, revenue tied to any one model decays fast, and a lab that misses one release could lose its market.",
+      "see_also": []
+    }
+  ]
+}
