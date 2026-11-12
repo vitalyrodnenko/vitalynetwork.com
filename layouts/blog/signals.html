@@ -5,48 +5,64 @@
 {{ $css := resources.Get "css/signals.css" | minify | fingerprint }}
 <link rel="stylesheet" href="{{ $css.RelPermalink }}">
 {{ $titles := dict }}
-{{ range $d.sections }}{{ $titles = merge $titles (dict .id .title) }}{{ end }}
+{{ $tone := dict }}
+{{ range $i, $s := $d.sections }}
+  {{ $titles = merge $titles (dict $s.id $s.title) }}
+  {{ $tone = merge $tone (dict $s.id (printf "t%d" (add (mod $i 6) 1))) }}
+{{ end }}
 <div class="container container-narrow signals">
     <div class="post-header">
         <div class="post-series">Signals</div>
         <h1>{{ .Title }}</h1>
         <div class="post-meta">
-            <span>{{ .Date.Format "Jan 2, 2006" }}</span> · <span>{{ default 1 .Params.minutes }} Min Read</span>
+            {{ with $d.week_label }}<span class="sig-week">{{ . }}</span> · {{ end }}<span>{{ .Date.Format "Jan 2, 2006" }}</span> · <span>{{ default 1 .Params.minutes }} Min Read</span>
         </div>
         {{ partial "article-tags.html" (dict "Page" . "Centered" true) }}
     </div>
 
     <div class="post-body">
+        {{ with $d.key_numbers }}
+        <div class="sig-stats">
+            {{ range . }}
+            <a class="sig-stat" href="{{ .href }}">
+                <span class="sig-stat-value">{{ .value }}</span>
+                <span class="sig-stat-phrase">{{ .phrase }}</span>
+                {{ with .card }}<span class="sig-stat-card">{{ . }} →</span>{{ end }}
+            </a>
+            {{ end }}
+        </div>
+        {{ end }}
+
         <section class="sig-lead">
             <h2 id="the-week">The week in one read</h2>
-            {{ $d.lead | markdownify | safeHTML }}
+            {{ with $d.lead_paragraphs }}{{ range . }}{{ . | markdownify | printf "<p>%s</p>" | safeHTML }}{{ end }}{{ else }}{{ $d.lead | markdownify | safeHTML }}{{ end }}
         </section>
 
         {{ with $d.core_signals }}
         <section class="sig-core">
             <h2 id="core-signals">Core signals</h2>
-            <table>
-                <thead><tr><th>Signal</th><th>So what</th><th>More in</th></tr></thead>
-                <tbody>
+            <ol class="sig-index">
                 {{ range . }}
-                <tr id="{{ .id }}">
-                    <td>{{ .signal | markdownify }}</td>
-                    <td>{{ .so_what | markdownify }}{{ partial "signals/earlier.html" .see_also }}</td>
-                    <td>{{ with .section }}<a href="#{{ . }}">{{ index $titles . }}</a>{{ end }}</td>
-                </tr>
+                <li id="{{ .id }}">
+                    <div class="sig-index-signal">{{ .signal | markdownify }}</div>
+                    <div class="sig-index-sowhat">{{ .so_what | markdownify }}</div>
+                    {{ with .section }}<a class="sig-tag {{ index $tone . }}" href="#{{ . }}">{{ index $titles . }}</a>{{ end }}
+                </li>
                 {{ end }}
-                </tbody>
-            </table>
+            </ol>
         </section>
         {{ end }}
 
         {{ range $d.sections }}
         {{ if or .cards .bullets }}
-        <section class="sig-section">
-            <h2 id="{{ .id }}">{{ .title }}</h2>
+        <section class="sig-section {{ index $tone .id }}{{ if .bullets }} sig-backdrop{{ end }}">
+            <h2 id="{{ .id }}"><span class="sig-dot"></span>{{ .title }}</h2>
             {{ with .bullets }}
             <ul class="sig-bullets">
-                {{ range . }}<li id="{{ .id }}">{{ .text | markdownify }}</li>{{ end }}
+                {{ range . }}
+                {{ $parts := split .text ": " }}
+                <li id="{{ .id }}">{{ if and (gt (len $parts) 1) (le (len (split (index $parts 0) " ")) 3) }}<strong>{{ index $parts 0 }}</strong> {{ delimit (after 1 $parts) ": " | markdownify }}{{ else }}{{ .text | markdownify }}{{ end }}</li>
+                {{ end }}
             </ul>
             {{ end }}
             {{ range .cards }}
@@ -72,10 +88,10 @@
             {{ range . }}
             <div class="sig-question" id="{{ .id }}">
                 <h3>{{ .question }}</h3>
-                <ul>
-                    <li>{{ .side_a | markdownify }}</li>
-                    <li>{{ .side_b | markdownify }}</li>
-                </ul>
+                <div class="sig-sides">
+                    <div class="sig-side">{{ .side_a | markdownify }}</div>
+                    <div class="sig-side">{{ .side_b | markdownify }}</div>
+                </div>
             </div>
             {{ end }}
         </section>

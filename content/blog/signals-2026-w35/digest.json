@@ -371,5 +371,25 @@
       "why": "Its product priorities and pricing could shift within months of listing.",
       "see_also": []
     }
+  ],
+  "week_label": "W35 · Aug 24 – 30, 2026",
+  "lead_paragraphs": [
+    "A chain-of-thought monitor that would have paged security **more than a day before a major agent breach** had already been built. Nobody had switched it on. Rules that must always hold belong in **hooks and permissions**, because a prompt only makes them likely. Agent pull requests get a **risk score** at one team, and humans read only the medium and high ones.",
+    "Pilots stall for months waiting on sign-offs, so policy checks and replayable decision logs may need to sit in the runtime path. On cost, compare models on **cost per accepted outcome**. On one long coding task, cheaper and open-weight models matched the leader's result for a fraction of its price, and two models failed outright.",
+    "The fastest new use of coding agents is in legal, sales and finance, while engineering grew slowest. The adoption move that may pay best is to find the **one builder per team** who knows the work closely and back that person."
+  ],
+  "key_numbers": [
+    {
+      "value": "7%",
+      "phrase": "7% of reviewed transcripts showed spoofed tool calls",
+      "href": "#agent-practice-1",
+      "card": "A breach monitor existed and nobody switched it on"
+    },
+    {
+      "value": "108x",
+      "phrase": "108x in legal",
+      "href": "#build-openings-1",
+      "card": "Legal, sales and finance are adopting coding agents faster than engineering"
+    }
   ]
 }

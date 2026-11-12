@@ -376,5 +376,31 @@
         }
       ]
     }
+  ],
+  "week_label": "W38 · Sep 14 – 20, 2026",
+  "lead_paragraphs": [
+    "Agents that finish the whole job are where revenue is moving. At a top accelerator, their share of the batch rose to **over 25%**. A recruiting tool expects revenue per account to double or triple after adding outreach and scheduling to its search. Costs fell at the same time: **token prices and frontier-model share both dropped**, and the heaviest AI spenders cut per-employee spend.",
+    "In long agent sessions almost every token is cached, so **cache retention is the line to price**, and a blended per-million figure hides it. Harness practice: **bind identity and memory below the model**, move stable steps into generated code, and match approval to how hard a change is to undo. Most guardrails likely already exist, and adversarial testing is the weak spot.",
+    "Distribution is shifting too, because **assistants now pick vendors from third-party lists and awards** that a vendor cannot write for itself. As execution gets cheap, the money may go to whoever owns the outcome and meters the work that pays off for the customer."
+  ],
+  "key_numbers": [
+    {
+      "value": "over 25%",
+      "phrase": "over 25% of the batch",
+      "href": "#build-openings-1",
+      "card": "Agents that finish the whole job are pulling revenue forward"
+    },
+    {
+      "value": "over $10M",
+      "phrase": "over $10M a year",
+      "href": "#build-openings-2",
+      "card": "Selling data and RL environments to labs became a real market"
+    },
+    {
+      "value": "60%",
+      "phrase": "around 60% of new app launches",
+      "href": "#platform-absorption-1",
+      "card": "Products win by plugging into the user's daily-driver assistant"
+    }
   ]
 }

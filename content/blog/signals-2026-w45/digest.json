@@ -331,5 +331,31 @@
       "why": "If so, revenue tied to any one model decays fast, and a lab that misses one release could lose its market.",
       "see_also": []
     }
+  ],
+  "week_label": "W45 · Nov 2 – 8, 2026",
+  "lead_paragraphs": [
+    "Enterprise AI spend is running well past the budgets built for it. Plans assumed growth in seats, but **spend per AI-using enterprise rose 4.7x**, because agents run in parallel and keep working after people log off. Apple and Uber capped AI spend per person. The deeper cost cuts came from the harness: **route each task to the cheapest model that passes its eval**, keep the agent workflow in version control and track cost per merged PR.",
+    "Model upgrades call for the same discipline. New releases now lift some tasks and regress others, so **per-task evals beat a single score**, and scaffolding built for an older model should be stripped out and retested. Anthropic's S-1 showed where the money sits: 85% gross margin at the model layer, and much less once channel fees, training and staff are paid.",
+    "For builders, a cheap open-source bounty produced several usable clones of a paid tool, and **mid-tier SaaS with no specialized data looks exposed**. Platforms kept absorbing single-feature products, and search referrals keep shrinking. Models may turn over within a couple of quarters, so the parts worth investing in are **evals, permission rules and cost controls**."
+  ],
+  "key_numbers": [
+    {
+      "value": "4.7x",
+      "phrase": "spend per AI-using enterprise rose 4.7x",
+      "href": "#business-case-1",
+      "card": "Agent spend scales with work done, and per-seat budgets break"
+    },
+    {
+      "value": "$40,000",
+      "phrase": "$40,000-a-year SaaS tool",
+      "href": "#build-openings-1",
+      "card": "Mid-tier SaaS is now cheap to clone"
+    },
+    {
+      "value": "$300M",
+      "phrase": "$300M run-rate business, about a third of revenue",
+      "href": "#build-openings-2",
+      "card": "Build the primitive agents will need before the demand shows up"
+    }
   ]
 }

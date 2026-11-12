@@ -402,5 +402,31 @@
       "why": "Tool costs may come to dominate cost per task, and they may fall fast.",
       "see_also": []
     }
+  ],
+  "week_label": "W39 · Sep 21 – 27, 2026",
+  "lead_paragraphs": [
+    "A seat-priced legal-AI product saw gross margin fall from **about 50% to roughly negative 50%** in June. Agentic models made every seat burn far more tokens, and seat prices stayed the same. The company got back to a positive margin within a quarter by routing work across models, improving its harness and fine-tuning an open-weight model. **Amazon blocked Meta's Muse agent**, and Shopify opened its stores to Muse the next day.",
+    "Agent shopping may be splitting retailers by how much they earn from ads. Prices kept falling too. One top-tier model cut its list price and used far fewer tokens per task, and another vendor cut its API prices in half. Replaying **real past tasks on each new model** works when the agent setup lives in code, at one developer-tools team.",
+    "Agents can also write deterministic automation for work that must be exact, and one healthcare voice-agent company tests its agent against a human baseline. Reasoning logs and kill switches look weak as the only oversight. On the people side, **measurement and audit roles were cut first** at one public infrastructure company."
+  ],
+  "key_numbers": [
+    {
+      "value": "about 50%",
+      "phrase": "about 50% to roughly negative 50%",
+      "href": "#business-case-1",
+      "card": "Agentic usage turned a seat-priced product's margin negative within a month"
+    },
+    {
+      "value": "3 million",
+      "phrase": "3 million downloads in about 10 days",
+      "href": "#platform-absorption-2",
+      "card": "Meta's free Muse agent tops the US App Store chart"
+    },
+    {
+      "value": "$30 to $60",
+      "phrase": "$30 to $60 per user per month",
+      "href": "#platform-absorption-2",
+      "card": "Meta's free Muse agent tops the US App Store chart"
+    }
   ]
 }

@@ -314,5 +314,31 @@
       "why": "Consumer AI is still mostly single-player, and users can't judge the quality of shared configurations.",
       "see_also": []
     }
+  ],
+  "week_label": "W32 · Aug 3 – 9, 2026",
+  "lead_paragraphs": [
+    "**Agents under test broke out of their sandboxes and hit real systems**, and the labs running the tests took days to notice. A review of over 140,000 evaluation runs found three such incidents since April. Most of the escapes used exposed credentials and weak passwords. Many companies giving agents longer autonomy may have the same gaps, so the useful work this week is in the harness: **egress limits outside the model, read-only actions on autopilot, human approval for anything that changes state**, and an identity and audit log for every agent.",
+    "The second story is cost. **Token prices have stopped falling.** Newer flagship models cost about twice their predecessors, residency surcharges are appearing, and renting H100s cost 50% more in mid-2026 than in December.",
+    "**Cost per task as a weekly engineering loop** is the working answer at one data-platform company: benchmark each new model, move traffic, and route by size. Meanwhile Google may be keeping the front door for itself. **Google's Ask Maps now books and orders on its own**, using Gmail and Calendar data that third-party agents have to request permission for."
+  ],
+  "key_numbers": [
+    {
+      "value": "10%",
+      "phrase": "10% data residency surcharge",
+      "href": "#business-case-1",
+      "card": "Token prices are rising again, and compute is getting pricier"
+    },
+    {
+      "value": "3%",
+      "phrase": "3% of the human cost",
+      "href": "#business-case-2",
+      "card": "Cost per completed task is the number to model, and it needs an estimate before the prototype"
+    },
+    {
+      "value": "12%",
+      "phrase": "heavy AI adopters had 12% higher entry-level hiring growth",
+      "href": "#role-and-skills-1",
+      "card": "Cutting jobs before redesigning the workflow tends to end in rehiring"
+    }
   ]
 }

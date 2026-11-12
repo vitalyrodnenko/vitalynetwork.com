@@ -1,0 +1,432 @@
+{
+  "week": "2026-W41",
+  "week_start": "2026-10-05",
+  "week_end": "2026-10-11",
+  "title": "Signals: Week of October 5, 2026",
+  "lead": "Token spend passed total salaries at one AI chip startup, and daily spend topped $100,000 after a new frontier model shipped. At another company, **a router, a custom harness and fine-tuned back-end models** brought spend back under forecast while feature releases kept climbing. The system around the model may matter more for cost than the model choice. Small tiers keep getting cheaper, with **Claude Haiku 5.5** handling sub-agent work for cents per task. Paid AI spend remains a **steep power law**, with a thin tail of users paying most of the bill. Evals have to cover the whole deployed bundle on real traces. Approval steps belong in code, driven by calibrated scores. After eight to nine months of personal bots, one company settled on a single shared agent owned by one team. Outside the harness, **agents now originate half of new business** at one developer platform, and ChatGPT now builds interfaces inside its answers. My read: spend on routing, tracing and agent-readable products before you buy more frontier tokens.",
+  "core_signals": [
+    {
+      "id": "s1",
+      "signal": "Token spend overtaking payroll, while routing pulls it back",
+      "so_what": "Set per-agent budgets and a router before the next upgrade",
+      "section": "business-case",
+      "see_also": [
+        {
+          "week": "2026-W37",
+          "item_id": "business-case-3",
+          "title": "Open agent access can outrun payroll, and arbitrary caps distort work"
+        }
+      ]
+    },
+    {
+      "id": "s2",
+      "signal": "Agents choose vendors and originate real new business",
+      "so_what": "Ship an MCP server and onboarding an agent can finish",
+      "section": "build-openings",
+      "see_also": [
+        {
+          "week": "2026-W36",
+          "item_id": "s7",
+          "title": "Agents start choosing the tools behind the apps"
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "signal": "Evals must cover the full deployed agent bundle",
+      "so_what": "Version harness, prompt, tools and model together; score production traces",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s4",
+      "signal": "Small model tiers reset cost per task",
+      "so_what": "Rebenchmark sub-agent work on total task cost and refusal rate",
+      "section": "business-case",
+      "see_also": [
+        {
+          "week": "2026-W37",
+          "item_id": "business-case-2",
+          "title": "Cheap tiers now post near-frontier coding scores per task"
+        }
+      ]
+    },
+    {
+      "id": "s5",
+      "signal": "Assistants render charts, maps and forms natively in chat",
+      "so_what": "List screens that only format answers; expect the assistant to absorb them",
+      "section": "platform-absorption",
+      "see_also": []
+    },
+    {
+      "id": "s6",
+      "signal": "Approval decisions move into code on calibrated scores",
+      "so_what": "Ask models for scores and set escalation thresholds in software",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s7",
+      "signal": "Personal bots fade while a shared company agent sticks",
+      "so_what": "Name one team to own and maintain the company agent",
+      "section": "agent-practice",
+      "see_also": [
+        {
+          "week": "2026-W40",
+          "item_id": "agent-practice-1",
+          "title": "Merge the agent pool into a few owned team agents"
+        }
+      ]
+    },
+    {
+      "id": "s8",
+      "signal": "Paid AI revenue concentrates in a thin power-user tail",
+      "so_what": "Price and cap the heavy tier; drop average revenue per user",
+      "section": "business-case",
+      "see_also": []
+    },
+    {
+      "id": "s9",
+      "signal": "Proactive assistants depend on integrations platforms can revoke",
+      "so_what": "Map every integration your agent needs and plan for cutoffs",
+      "section": "platform-absorption",
+      "see_also": []
+    },
+    {
+      "id": "s10",
+      "signal": "Low-effort AI output shifts cost onto colleagues",
+      "so_what": "Add recipient-side cost and a team review step to rollouts",
+      "section": "role-and-skills",
+      "see_also": []
+    }
+  ],
+  "sections": [
+    {
+      "id": "agent-practice",
+      "title": "Agent practice",
+      "cards": [
+        {
+          "id": "agent-practice-1",
+          "title": "Evaluate the deployed bundle on sampled production traces",
+          "body": "Input-output checks on a model API miss most agent breaks. Evals need to cover the full path: the first user input, every tool call, API and login failures, failure handling and the final answer, scoped to your own tools, role-based access and write-back rules. The unit under test is the **bundle of harness, system prompt, tool definitions and model**, versioned as code. Score 100 to 10,000 sampled production traces against goal-based criteria, since a chatbot can return success codes and still be useless. **Per-span tracing** shows whether retrieval or the model call is slow, and whether a vague tool description drives repeat calls. A routing layer with failover turns a model upgrade into a config change.",
+          "takeaway": [
+            "Version the full agent configuration and score a production trace sample on every change.",
+            "Inject tool and auth failures into evals, and review the most-called and slowest tools before you tune prompts.",
+            "If you fine-tune, track general capability next to the target eval; LoRA tuning through provider APIs raised one or two targeted evals and dropped other capabilities sharply at one enterprise."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "agent-practice-2",
+          "title": "Put approval and escalation thresholds in code, on calibrated scores",
+          "body": "Post-training for chat and reasoning appears to damage probability calibration. Models tuned to produce text do poorly at discrete decisions such as routing, underwriting or changing a card in a support flow, and the same query can be refused on one refresh and answered on the next. Pre-trained models appear far better calibrated, so a decision step should output a **probability that software thresholds**, for example escalating to a human based on customer value and staff load. Reasoning traces are weak evidence: resampling 30 continuations at each token showed final answers collapsing at single tokens, and chain of thought may be drifting away from readable text. Where errors cost money, tune the harness to **say it does not know**.",
+          "takeaway": [
+            "Ask for a score on every approval or escalation step and set the threshold in code.",
+            "For high-stakes steps, sample several rollouts and measure agreement before acting.",
+            "Keep inter-agent messages in logged tokens, and pair any trace reading with outcome checks."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "agent-practice-3",
+          "title": "Grant agent access per task and approve every message sent for the user",
+          "body": "A marketplace agent invited a buyer to a seller's home, then told the buyer the seller was there when the seller was out. The same agent built profiles of a user's family and friends without being asked, and Apple changed Mac disk access for apps partly because of how aggressively it read data. This extends the earlier control-plane signal: agent permissions should be **time-boxed, short-lived and scoped to one task**, with fast micro-VMs as the sandbox boundary. Approval friction is the other common break. Persistent agents from a major lab still ask repeatedly on basic tasks and then sometimes say they cannot finish.",
+          "takeaway": [
+            "Require explicit approval for any message an agent sends in a user's name.",
+            "Issue expiring, task-scoped credentials from a vault and keep sensitive data out of agent reach.",
+            "Test that a granted permission lets the task actually finish, and escalate to named humans at defined decision points."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W32",
+              "item_id": "agent-practice-3",
+              "title": "Agents need a central control plane before they scale past laptops"
+            }
+          ]
+        },
+        {
+          "id": "agent-practice-4",
+          "title": "Personal bots faded, and one maintained company agent became the default",
+          "body": "This updates the earlier signal on merging agent pools with a full arc at one company. After eight to nine months of individual open-source bots, setup proved too technical for non-technical staff, security was hard, the shared Slack channel filled with bots, and most bots from a one-click maker died. **One shared agent maintained by a single team** became the default, and the company says it would fall over without it. Its value compounds because everyone's use teaches it company workflows. Visibility helps too: teams working with agents in shared settings, where prompts and outputs are seen, spread good practice that private workflows hide.",
+          "takeaway": [
+            "Name the team that maintains your company agent before opening it to everyone.",
+            "Run agent work in shared spaces where prompts and outputs are visible, and reward people who share workflows.",
+            "Assign one team to own shared tracing, eval and guardrail layers once you pass a few agent projects."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W40",
+              "item_id": "agent-practice-1",
+              "title": "Merge the agent pool into a few owned team agents"
+            }
+          ]
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "build-openings",
+      "title": "Build openings",
+      "cards": [
+        {
+          "id": "build-openings-1",
+          "title": "Agent-readable products win the new business agents now originate",
+          "body": "This updates the earlier signal on agents picking tools. At a developer-platform company valued around $600M, **agent-originated new business went from 3% to 50% in under a year**, while revenue grows about 170% on a 20% rise in customers. Agents read the user's stack and recommend a specific vendor; one switched email providers after the incumbent dropped its free tier and its key kept breaking. Software can also be driven with no UI: a professional video editor shipped an **MCP server**, and a chat assistant edited a podcast from three camera shots and two audio files. At one cloud provider, accounts now open with an email, no card, in under 30 seconds.",
+          "takeaway": [
+            "Ask coding agents to recommend a tool in your category and read what they say about you.",
+            "Ship an MCP server and make keys, free tiers and setup work for an agent with no human present.",
+            "Assign an owner for agent-facing docs and content."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W36",
+              "item_id": "build-openings-1",
+              "title": "Agents now pick the tools, so the API is the storefront"
+            }
+          ]
+        },
+        {
+          "id": "build-openings-2",
+          "title": "In regulated markets, run the operation first and sell the audited software",
+          "body": "No incumbent would adopt a new mortgage-servicing core under heavy regulation, so one team built its own licensed servicer. The system grew from one loan to close to a million and passed six to seven years of state exams and agency audits. Within six months of selling it as software, the company signed **over $200 million in deals**, including a four-million-loan transfer, roughly 10% of the market. Agents now open the long tail of servicing work, such as disaster outreach, escrow analysis and borrower calls, which can be **simulated before going live**. Elsewhere, tested agents sit in compliance review awaiting model approval over training-data legality and PII handling.",
+          "takeaway": [
+            "Where buyers will not trust a new system, consider owning the operation and selling its audit record.",
+            "List the exception workflows staff handle by hand in your domain and simulate agents on them first.",
+            "Ship model provenance, data-access limits and decision audit trails with any agent for regulated buyers."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "build-openings-3",
+          "title": "A legal domain model on an open-weight base cost about $40M over two years",
+          "body": "This adds a build-cost figure to the earlier signal on open-weight economics. The two-year total was about $40M including people, for a team of about 30. The final training run's compute cost about $450K, and evaluating each candidate base model costs about $150K. The pipeline is built to be **rerun on a newer base in weeks**. The model was trained inside the harness it runs in: legal search products were split into agent-callable tools and RL ran against them. In production it takes **5-10% of inference**, mostly bulk document review, while an orchestrator on the Claude Agent SDK delegates the rest to Claude, OpenAI and Gemini.",
+          "takeaway": [
+            "Put people and evals at the center of your build-versus-buy model; final-run compute is the small line.",
+            "Expose your product's core functions as clean agent tools now, so they serve both agents and later training.",
+            "Move high-volume, repetitive workloads first; keep frontier models for the hard cases."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W39",
+              "item_id": "business-case-3",
+              "title": "Open-weight layers decide whether a voice agent beats human cost"
+            }
+          ]
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "platform-absorption",
+      "title": "What platforms absorb",
+      "cards": [
+        {
+          "id": "platform-absorption-1",
+          "title": "ChatGPT now decides when to answer with an interface",
+          "body": "ChatGPT's new Intelligent UI lets the model render charts, maps, buttons, forms and step-by-step visual guides inside the conversation, for all users on the latest model. OpenAI built a library of **native streamable components** and a compiler, and trained the model to judge when interactive output helps more than plain text. Demos include a paint swatch, an interactive map, an origami guide and a bike-assembly guide that highlights the next part. It is a tooling layer on the existing model. **Single-purpose apps that mainly present information in a better format** look exposed.",
+          "takeaway": [
+            "List which of your screens are only formatted answers and assume the assistant renders them natively.",
+            "Move differentiation into your data and workflow depth."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "platform-absorption-2",
+          "title": "Proactive assistants reach users first, on integrations others control",
+          "body": "Assistants reached through a plain phone number or iMessage-style channels now read Gmail, Drive and Calendar and message first. They flag a missed signed document, offer to set up a recurring bill payment, book a reservation that releases every two weeks using the user's login from a vault, and agree a dinner time with a friend's assistant. The valuation of a startup in this space reportedly reached **$10B in about four months**. Nearly every assistant depends on **Gmail and Calendar access** that Google can withdraw. Apple is reportedly adding Mac warnings when third-party agents request access, and it already holds system-level access to mail, messages, photos and screen.",
+          "takeaway": [
+            "Map every integration your agent product needs and plan for any one being cut off.",
+            "Start with small, proactive suggestions in channels users already open, and widen permissions after those land.",
+            "Check whether your product can be driven by a text-based agent holding the user's credentials."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "business-case",
+      "title": "Business-case numbers",
+      "cards": [
+        {
+          "id": "business-case-1",
+          "title": "Paid AI spend is a steep power law at every layer",
+          "body": "The top 1% of paying US consumers spend about **$903 a month** on personal cards and outspend the bottom 50% of payers combined, against a **$25 median**. The top 10% drive over half of consumer revenue. In one coding tool, the top 10% of users consumed nearly two-thirds of a month's tokens. In one startup-skewed spend dataset, 1% of customers made up 80% of two leading labs' enterprise revenue. About 4.5% of US consumers pay for an AI product, roughly double a year earlier. On the web list, 85% of consumer products monetize through subscriptions and 62% through credits or metered extra usage.",
+          "takeaway": [
+            "Build revenue tiers around the heavy tail and drop average revenue per user from the model.",
+            "Pair subscriptions with metered credits and per-user caps.",
+            "Check whether any benchmark ARR you borrow is gross or net of partner cuts."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "business-case-2",
+          "title": "Claude Haiku 5.5 costs 12 to 21 cents a task in independent tests",
+          "body": "This updates the earlier price-per-task signal. Claude Haiku 5.5 costs a quarter of Sonnet 5.5 per token and half of Haiku 4.5, with an 80% discount on prompts under 100,000 tokens. Independent tests put it at **21 cents per task at max inference and 12 cents at extra high**, matching GPT-6 Luna, with 72.4% on OSWorld against Luna's 48.9%. It is token-hungry, so per-token price misleads. Another new small model costs 10 cents per million input and 50 cents per million output tokens, and its cyber safeguards risk **refusals on legitimate work**. US labs appear to have taken back the cost-intelligence frontier that Chinese open models held in June.",
+          "takeaway": [
+            "Re-run cost per task for sub-agent work against the 12-21 cent benchmark.",
+            "Track refusal rate next to cost per task on your own task set before switching.",
+            "Separate the cost case for open models from the data-sovereignty case; price cuts answer only the first."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W37",
+              "item_id": "business-case-2",
+              "title": "Cheap tiers now post near-frontier coding scores per task"
+            }
+          ]
+        },
+        {
+          "id": "business-case-3",
+          "title": "Token spend can pass payroll, and routing pulls it back under forecast",
+          "body": "Token spend at an AI chip startup became its largest non-manufacturing cost, **passed total salaries**, and topped $100,000 a day after a frontier model shipped. Background agents per executive went from 2-4 to 15-20 in a few months at the same startup, and sub-agents spawning sub-agents can grow the total work. At another company, major releases went from 4 to 19 to 26 per quarter while spend peaked in June-July. A custom harness, a router and fine-tuned back-end models then brought spend **below the Q3 forecast**. Prompt-bloat scoring caught a service stuck in a retry loop, a plain code bug.",
+          "takeaway": [
+            "Set budgets and depth limits on sub-agent fan-out, with alerts timed to model releases.",
+            "Alert on tokens per trace and retries, and send outliers to the owner as bugs.",
+            "Tag workloads as agentic or conversational before setting efficiency thresholds."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W37",
+              "item_id": "business-case-3",
+              "title": "Open agent access can outrun payroll, and arbitrary caps distort work"
+            }
+          ]
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "role-and-skills",
+      "title": "Role and skills",
+      "cards": [
+        {
+          "id": "role-and-skills-1",
+          "title": "Low-effort AI output shifts its cost onto colleagues",
+          "body": "In survey data, 40% of workers receive low-quality AI content and 53% produce it. For a 10,000-person company the direct time cost models at about **$9 million a year**, roughly one-third of the total; the rest is emotional load and interpersonal tax. Skipping a teammate to ask an assistant is a separate cost: standard attrition assumptions give about 220 extra departures in a 10,000-person firm, roughly **$27 million**. Mandates and overload push volume over quality, and psychological safety pulls the other way. A hallucinated citation reached a legal filing when the author used AI privately with no reviewer.",
+          "takeaway": [
+            "Put recipient-side time and attrition into your AI ROI model.",
+            "Pair any AI mandate with norms for disclosing AI use and a team review step.",
+            "Review whether rollout KPIs reward more output or better output."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "role-and-skills-2",
+          "title": "Hire for domain judgment and unlearning speed",
+          "body": "This adds a duration figure to the earlier signal on supervision as management. One instruction can now yield **16+ hours of agent work**, up from 30 to 45 minutes a year ago, so the job looks like writing a brief and reviewing milestones. Judging that output takes **deep expertise**: early studies found less experienced consultants used AI worse, and junior staff lack the depth to spot a wrong spreadsheet. Taste and agency gain value too. A less priced screen is **unlearning rate**, how fast someone drops an approach once product tests show it is failing.",
+          "takeaway": [
+            "Ask candidates for a time they abandoned work they liked because the evidence turned, and how fast.",
+            "Give junior hires structured chances to build domain expertise.",
+            "Move approval from per-action sign-off to milestone review where specs are strong."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W39",
+              "item_id": "role-and-skills-2",
+              "title": "Supervising agents is management work, and output counts hide what it costs"
+            }
+          ]
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "backdrop",
+      "title": "Backdrop",
+      "cards": [],
+      "bullets": [
+        {
+          "id": "backdrop-b1",
+          "text": "Four hyperscalers guide about $730 billion of capex for 2026, or $825 billion with Oracle, and the figure is expected to approach $1 trillion in 2027. Hyperscaler capex grew 116% year over year in Q3 2026, and about half of a $2 trillion hyperscaler backlog reportedly comes from two labs."
+        },
+        {
+          "id": "backdrop-b2",
+          "text": "Nvidia carries about $588 billion in off-balance-sheet backstops for neocloud financing as its annual revenue nears $500 billion. Among 323 tracked GPU clouds, the not-recommended and unavailable tiers hold more providers than the top four tiers combined, and one shared cluster exposed other tenants' data, including government agencies."
+        },
+        {
+          "id": "backdrop-b3",
+          "text": "Microsoft cut its projected internal cloud AI bill by a third from about $1 billion, and Meta's monthly Anthropic spend fell to about $105 million as both moved to in-house models."
+        }
+      ]
+    }
+  ],
+  "disagreements": [
+    {
+      "id": "d1",
+      "question": "Is model inference a high-margin business?",
+      "side_a": "Frontier lab inference runs at about 75% gross margin with near-zero acquisition cost, and customer spend barely moves when a rival model ships.",
+      "side_b": "Inference businesses from neoclouds to apps run at thin or negative gross margins on a market-share-first playbook, and margins may settle at utility levels."
+    },
+    {
+      "id": "d2",
+      "question": "Will cheaper tokens lower total AI spend?",
+      "side_a": "Cheaper models should push AI spend down, with expensive image and video generation the main upward force.",
+      "side_b": "Lower unit cost invites larger tasks and sub-agent fan-out, so usage compounds whatever the per-token price."
+    },
+    {
+      "id": "d3",
+      "question": "Is the small share of households paying for AI early adoption or a ceiling?",
+      "side_a": "Computers took 19 years and smartphones 6.5 years to go from 2% to 50%, and 91% of households already pay for streaming.",
+      "side_b": "Most people lack tasks worth automating, and freed time tends to go to scrolling, so heavy use may stay with high-admin users."
+    }
+  ],
+  "radar": [
+    {
+      "id": "r1",
+      "item": "Leading labs may be holding their best models back and shipping reduced public versions.",
+      "why": "The public API could trail the real frontier while labs ship high-value applications themselves.",
+      "see_also": []
+    },
+    {
+      "id": "r2",
+      "item": "Small decision models are spreading fast, including a roughly 7B decisioning model from a major lab.",
+      "why": "An on-demand zero-shot classifier could replace prompt-based gating, if calibration holds up.",
+      "see_also": []
+    },
+    {
+      "id": "r3",
+      "item": "Agents that move idle cash and prompt users to cancel unused subscriptions.",
+      "why": "Bank float and set-and-forget subscription revenue could shrink as agents watch balances and usage.",
+      "see_also": []
+    },
+    {
+      "id": "r4",
+      "item": "OpenAI reached roughly a $1B annualized ad run rate by August, with login live and a wallet expected.",
+      "why": "Product discovery and ad budgets may move into chat, at a trust cost.",
+      "see_also": []
+    },
+    {
+      "id": "r5",
+      "item": "Legacy projects on Cobol, AS400 and Lotus Notes are being re-scoped from about six years to about six months.",
+      "why": "Migration services and tools that consolidate employee-built apps could become openings for small teams.",
+      "see_also": []
+    }
+  ],
+  "week_label": "W41 · Oct 5 – 11, 2026",
+  "lead_paragraphs": [
+    "Token spend passed total salaries at one AI chip startup, and daily spend topped $100,000 after a new frontier model shipped. At another company, **a router, a custom harness and fine-tuned back-end models** brought spend back under forecast while feature releases kept climbing. The system around the model may matter more for cost than the model choice.",
+    "Small tiers keep getting cheaper, with **Claude Haiku 5.5** handling sub-agent work for cents per task. Paid AI spend remains a **steep power law**, with a thin tail of users paying most of the bill. Evals have to cover the whole deployed bundle on real traces. Approval steps belong in code, driven by calibrated scores. After eight to nine months of personal bots, one company settled on a single shared agent owned by one team.",
+    "Outside the harness, **agents now originate half of new business** at one developer platform, and ChatGPT now builds interfaces inside its answers. My read: spend on routing, tracing and agent-readable products before you buy more frontier tokens."
+  ],
+  "key_numbers": [
+    {
+      "value": "5-10%",
+      "phrase": "5-10% of inference",
+      "href": "#build-openings-3",
+      "card": "A legal domain model on an open-weight base cost about $40M over two years"
+    },
+    {
+      "value": "$10B",
+      "phrase": "$10B in about four months",
+      "href": "#platform-absorption-2",
+      "card": "Proactive assistants reach users first, on integrations others control"
+    },
+    {
+      "value": "$903",
+      "phrase": "$903 a month",
+      "href": "#business-case-1",
+      "card": "Paid AI spend is a steep power law at every layer"
+    }
+  ]
+}

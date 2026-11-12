@@ -383,5 +383,30 @@
         }
       ]
     }
+  ],
+  "week_label": "W40 · Sep 28 – Oct 4, 2026",
+  "lead_paragraphs": [
+    "On an independent run, a mid-tier model that topped a coding benchmark cost **$7.60 per task**, more than its larger sibling, because it burned far more tokens at the same per-token price. Routing is where the savings showed up: **swapping the model behind each agent** cut cost per outcome by up to 10x at one enterprise software vendor. Inside companies, solo agents tend to pile up into overlapping pools. The likely fix is fewer **team agents with a named owner**, plus a scheduled review of what they know.",
+    "The clearest build openings are in work incumbents skip: **exception handling**, judgment-heavy B2B procurement, and refund walls that persistent texting agents now push through. Consumer agents launched in a cluster, with a free tier from Meta and a paid work agent from OpenAI. Websites responded with CAPTCHAs and login walls, while some vendors opened audited agent endpoints. **Review and scope choice look set to replace coding as the bottleneck**, which may change who to hire."
+  ],
+  "key_numbers": [
+    {
+      "value": "$7.60",
+      "phrase": "$7.60 per task",
+      "href": "#business-case-2",
+      "card": "A benchmark win can cost more per task than its sibling"
+    },
+    {
+      "value": "70%",
+      "phrase": "70% performance in hours",
+      "href": "#build-openings-1",
+      "card": "Build for the 80% of the workflow that is exceptions"
+    },
+    {
+      "value": "80%+",
+      "phrase": "80%+ gross margin",
+      "href": "#business-case-1",
+      "card": "Gross margin now depends on which model serves each step"
+    }
   ]
 }

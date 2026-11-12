@@ -7,6 +7,7 @@ layout: "signals"
 series: "Signals"
 minutes: 16
 week: "2026-W39"
+image: "/images/signals/signals-2026-w39.png"
 tags: ["signals", "weekly-digest", "ai"]
 keywords: ["AI signals", "weekly digest", "AI agents", "product management"]
 build: {"publishResources": false}

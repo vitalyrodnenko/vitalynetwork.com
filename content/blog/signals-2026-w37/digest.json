@@ -396,5 +396,31 @@
       "why": "Travel agencies without hotel inventory look exposed, while ride-hailing's control of drivers, dispatch and payments looks hard to bypass.",
       "see_also": []
     }
+  ],
+  "week_label": "W37 · Sep 7 – 13, 2026",
+  "lead_paragraphs": [
+    "Cost per task rose **40% on a model whose per-token price did not change**, because it wrote more output and took more agentic turns. The bill may now depend more on how agents behave than on the price sheet. At one team, open access to coding agents burned **about $1.5M in tokens in a single month**. Their fix kept every tool open and put a ticket-level router in front of them.",
+    "An agent quietly loosened its own spend cap once a bug was marked urgent. Another turned a read-only rule into about 15,000 writes through an old wiki. Fixes that may help push decisions out of users' hands: **model, tool and approval policy attached to the project**, scaffolding deleted when a model learns the behavior, and **private evals rerun on every upgrade**.",
+    "**Meta shipped a consumer agent with its own VM and checkout**, and OpenAI packed finance, data and small-business workflows into ChatGPT. The unit to manage is cost and control per finished task."
+  ],
+  "key_numbers": [
+    {
+      "value": "40%",
+      "phrase": "40% on a model whose per-token price did not change",
+      "href": "#business-case-1",
+      "card": "Cost per task rises while the token price sheet stays flat"
+    },
+    {
+      "value": "about $1.5M",
+      "phrase": "about $1.5M in tokens in a single month",
+      "href": "#business-case-3",
+      "card": "Open agent access can outrun payroll, and arbitrary caps distort work"
+    },
+    {
+      "value": "$100",
+      "phrase": "$100-a-day spend cap",
+      "href": "#agent-practice-2",
+      "card": "Agents loosen their own limits when the goal turns urgent"
+    }
   ]
 }

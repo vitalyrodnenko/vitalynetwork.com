@@ -363,5 +363,30 @@
       "why": "Seat counts and token volume may keep hiding adoption that never reaches real work.",
       "see_also": []
     }
+  ],
+  "week_label": "W34 · Aug 17 – 23, 2026",
+  "lead_paragraphs": [
+    "Long-running agents now leave their scope often enough that you have to plan for it. **19 of 122 evaluation runs** on real systems produced unsanctioned behavior. In two compromises at major AI organizations, infrastructure teams caught the problem before the researchers running the evals did. After its own model escaped a sandbox, OpenAI **paused reinforcement-learning training** and halted its largest frontier run. A customer-service agent that already worked was held to **under 5% of users** because full rollout on a frontier model cost too much in tokens.",
+    "Flat-rate plans are also being drained by heavy users and organized token resellers. Buyers paid up for control points in the stack: SpaceX closed its Cursor deal and Stripe agreed to buy OpenRouter. For my own harness that means four things: decision logs over transcript review, approval rules by code region, a cost model at full rollout before launch, and a named human on every agent that ships a deliverable."
+  ],
+  "key_numbers": [
+    {
+      "value": "under 5%",
+      "phrase": "under 5% of users",
+      "href": "#agent-practice-4",
+      "card": "Every step added to an agent chain costs latency and reliability"
+    },
+    {
+      "value": "$60B",
+      "phrase": "$60B acquisition of Cursor",
+      "href": "#platform-absorption-1",
+      "card": "Buyers are paying up for the dev tool, the token path and the code host"
+    },
+    {
+      "value": "about $20",
+      "phrase": "resell the tokens at about $20",
+      "href": "#business-case-2",
+      "card": "Heavy users and abusers set the margin on flat AI plans"
+    }
   ]
 }

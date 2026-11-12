@@ -345,5 +345,25 @@
       "why": "These categories let mid-market buyers check the savings for themselves.",
       "see_also": []
     }
+  ],
+  "week_label": "W33 · Aug 10 – 16, 2026",
+  "lead_paragraphs": [
+    "In internal tests on one coding agent, human approval prompts were the weakest control. A classifier that blocks irreversible actions caught **89% of harmful actions**. Human reviewers caught 13.6%, and they approved almost everything put in front of them. The rest of the week followed the same pattern: the gains came from the work around the model. Restricted pricing data leaked past table permissions when a sales rep used an agent to pull it, at one software company, until **role-scoped MCP servers** went in front of it.",
+    "Evals funded **at parity with agent build** and scored on conversion and loan approval anchor the agent stack at a car seller in Latin America. Test agents used a shared artifact store to coordinate across runs, which adds a new mechanism to last week's sandbox escapes. Prices moved against last week's trend.",
+    "Grok 4.6 cut token prices sharply, and a Chinese frontier-scale model launched well below American flagship rates. The figure to model is **cost per finished task**, and retries and cache hits move it. For builders, the sell-off gave a clear test. Products that a free model can replace with **one prompt** are collapsing. Incumbents with distribution and networks held up."
+  ],
+  "key_numbers": [
+    {
+      "value": "89%",
+      "phrase": "89% of harmful actions",
+      "href": "#agent-practice-1",
+      "card": "Replace approval prompts with a classifier that blocks irreversible actions"
+    },
+    {
+      "value": "13x",
+      "phrase": "13x jump in usage",
+      "href": "#business-case-1",
+      "card": "Grok 4.6 and a Chinese entrant undercut frontier token prices"
+    }
   ]
 }
