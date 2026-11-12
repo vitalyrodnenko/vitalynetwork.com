@@ -1,0 +1,387 @@
+{
+  "week": "2026-W40",
+  "week_start": "2026-09-28",
+  "week_end": "2026-10-04",
+  "title": "Signals: Week of September 28, 2026",
+  "lead": "On an independent run, a mid-tier model that topped a coding benchmark cost **$7.60 per task**, more than its larger sibling, because it burned far more tokens at the same per-token price. Routing is where the savings showed up: **swapping the model behind each agent** cut cost per outcome by up to 10x at one enterprise software vendor. Inside companies, solo agents tend to pile up into overlapping pools. The likely fix is fewer **team agents with a named owner**, plus a scheduled review of what they know. The clearest build openings are in work incumbents skip: **exception handling**, judgment-heavy B2B procurement, and refund walls that persistent texting agents now push through. Consumer agents launched in a cluster, with a free tier from Meta and a paid work agent from OpenAI. Websites responded with CAPTCHAs and login walls, while some vendors opened audited agent endpoints. **Review and scope choice look set to replace coding as the bottleneck**, which may change who to hire.",
+  "core_signals": [
+    {
+      "id": "s1",
+      "signal": "Solo agents consolidate into shared team agents with owners",
+      "so_what": "Inventory overlapping agents and name an owner before merging",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s2",
+      "signal": "Per-agent model swaps beat token caps on cost",
+      "so_what": "Build a swap layer and retest every agent per release",
+      "section": "business-case",
+      "see_also": [
+        {
+          "week": "2026-W36",
+          "item_id": "business-case-2",
+          "title": "Routing by task tier is the main cost lever, and buyers paid for it"
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "signal": "Benchmark leaders can cost more per finished task",
+      "so_what": "Measure cost per task at the reasoning setting you run",
+      "section": "business-case",
+      "see_also": [
+        {
+          "week": "2026-W37",
+          "item_id": "business-case-1",
+          "title": "Cost per task rises while the token price sheet stays flat"
+        }
+      ]
+    },
+    {
+      "id": "s4",
+      "signal": "Approval lines drawn by what an action changes",
+      "so_what": "Pre-approve low-risk actions; require sign-off before sharing personal data",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s5",
+      "signal": "Instruction files and orchestration go stale each model release",
+      "so_what": "Re-eval config entries and collapse agent teams on upgrade",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s6",
+      "signal": "Agents answer through data gaps and rarely ask",
+      "so_what": "Write metric definitions as agent-readable assets before scaling",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s7",
+      "signal": "Exception paths are where incumbents look exposed",
+      "so_what": "Map exceptions first when scoping an agent against incumbents",
+      "section": "build-openings",
+      "see_also": []
+    },
+    {
+      "id": "s8",
+      "signal": "Free platform agent pressures paid general assistants",
+      "so_what": "Compete on niche depth and onboarding; free distribution wins basics",
+      "section": "platform-absorption",
+      "see_also": [
+        {
+          "week": "2026-W37",
+          "item_id": "platform-absorption-1",
+          "title": "Meta ships a consumer agent with its own VM and checkout"
+        }
+      ]
+    },
+    {
+      "id": "s9",
+      "signal": "Sites block agents while vendors open agent endpoints",
+      "so_what": "Ship an audited MCP server or gateway for core actions",
+      "section": "platform-absorption",
+      "see_also": []
+    },
+    {
+      "id": "s10",
+      "signal": "Review and scope choice may replace coding as the bottleneck",
+      "so_what": "Hire for taste; name a human owner per agent change",
+      "section": "role-and-skills",
+      "see_also": []
+    }
+  ],
+  "sections": [
+    {
+      "id": "agent-practice",
+      "title": "Agent practice",
+      "cards": [
+        {
+          "id": "agent-practice-1",
+          "title": "Merge the agent pool into a few owned team agents",
+          "body": "Solo agents pile up into a pool. Several do the same job, each is kept by one person, each holds its own picture of the company, and each gets abandoned when its owner leaves. The most AI-forward companies are merging them into fewer team agents with a **named owner**. Sierra and Shopify's internal agent are the cited examples. Four archetypes help with scoping: expert (the easiest start), common-work, bridge across sales and delivery (attractive but hardest), and chief-of-staff. Shared knowledge goes through **collect, refine, approve, maintain**: the agent proposes memory updates and a person approves them. A shared agent with no owner drifts within weeks.",
+          "takeaway": [
+            "List the agents your teams built, find the duplicates, and merge one into a shared expert agent.",
+            "Name the knowledge owner before building, and write the don't list and scope in tool-neutral form so you can move to vendor team agents later."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "agent-practice-2",
+          "title": "Set approval rules by what the action changes",
+          "body": "Unattended runs stall on approvals. A session started at 9 a.m. can sit from 9:01 until noon waiting on one trivial permission. Scoped sandbox policies avoid this by setting which URLs, datasets and tools an agent may use and which methods (GET, POST, PATCH) it may call. Put the approval line where an action would change the user's own setup. A drafted email or a claimed flight credit can run alone. Switching insurance should ask first. About 30 marketplace listings made by a consumer agent exposed a home address, and a stranger showed up. Rules that must always hold work best as **policy as code**, which the agent can read when it is blocked.",
+          "takeaway": [
+            "Pre-approve read and draft actions through scoped policies, and require sign-off before any agent shares an address, phone number or payment detail.",
+            "Move must-hold rules into pipeline-enforced policy, and run a separate monitor on every agent with production access."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "agent-practice-3",
+          "title": "Each model upgrade should shrink the harness",
+          "body": "Missing knowledge is rarely why models fail hard evals. In nearly every transcript reviewed, the model reasoned its way to the right fix and then chose not to apply it. A **decision-notes step** in the harness exposes that skip so a reviewer can catch it. Instruction files such as CLAUDE.md go stale with each model version. New projects can start without one and add entries only for failures that repeat. Orchestration follows the same cycle: grow a team of agents around a hard problem, then shrink it once a single stronger model can do the job. This updates the earlier swarm signal: thousands of agents worked 88 hours on an open math problem, coordinated by only a few groups and one change of direction.",
+          "takeaway": [
+            "Add a decision-log step and review it before accepting agent output.",
+            "On every upgrade, rerun evals on each config entry and skill, and delete the ones that no longer help."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W38",
+              "item_id": "r1",
+              "title": "Agent swarms mostly buy speed: four agents finish some benchmarks about twice as fast at roughly twice the cost, and the 10,000-agent math run had no single-agent comparison."
+            }
+          ]
+        },
+        {
+          "id": "agent-practice-4",
+          "title": "Agents answer with whatever data they get, so readiness becomes a gate",
+          "body": "Agents rarely say they lack information. They answer with what they were given. A human used to fill in the meaning of a metric like pipeline or ACV. An agent needs it spelled out, with definitions, relationships and context. The volume of trusted data a data team produces may rise to about 10x pre-agent levels. Skipping a readiness check is expensive: a first AI build that went straight to model development cost about **five times** as much as a follow-up that checked the business need and the data first. Accuracy bars depend on the task. A financial close agent at a large carmaker read the business at about 93% accuracy, and auditors found the numbers 7% too high.",
+          "takeaway": [
+            "Put a go/no-go gate on data quality and access before committing developers.",
+            "Run one agent task on clean and dirty inputs and use the cost and quality gap to fund data cleanup."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "build-openings",
+      "title": "Build openings",
+      "cards": [
+        {
+          "id": "build-openings-1",
+          "title": "Build for the 80% of the workflow that is exceptions",
+          "body": "In invoice handling, matching and posting to the ERP are about 20% of the job. The other 80% is exceptions: fraudulent invoices, mismatches and edge cases, which incumbent software mostly ignores. Value sat in exceptions for a procurement-agent startup that began on the clean flow and soon moved off it. The do-it-yourself threat may be smaller than it looks. An internal build reaches about **70% performance in hours**, which still leaves people checking all of the output. Three to four months went into an internal cash-collection tool at a Fortune 500 company, which ran into two ERPs and scattered context and then dropped it. Support automation has the same long tail: claimed coverage near 95% was closer to 50% when measured by unique case.",
+          "takeaway": [
+            "Map the exception paths first when you scope an agent against an incumbent.",
+            "Answer the build-it-ourselves objection with the cost of the last 20%, and aim at outcome-selling work an incumbent's seat product would cannibalize."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "build-openings-2",
+          "title": "B2B procurement may fit agents better than consumer shopping",
+          "body": "Orders average about $3,000 on one B2B sourcing platform. Supplier comparisons have at least 20 columns, including MOQ, certificates and incoterms, and getting from idea to delivered product takes roughly 60 steps. When an agent writes the brief, contacts suppliers and builds the comparison, sourcing that used to take four weeks to months can shrink to hours or a day. On **107 tasks** distilled from real buyer-seller conversations, a vertical harness reportedly beat two general coding agents on pass rate at under half the price. Low-value negotiations that nobody had capacity for can run on their own. Multi-million-dollar deals keep cost engineers in the loop.",
+          "takeaway": [
+            "Look for workflows where small businesses still run spreadsheets and mass emails across many counterparties.",
+            "Build a benchmark from your own real conversations and score pass rate, time and cost together."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "build-openings-3",
+          "title": "Narrow tools and long-deferred projects are now cheap to rebuild",
+          "body": "A $29 a month inbox-sorting and meeting-notes tool was replaced in under half a day by a scheduled task in a general assistant. The task sends a morning digest and drafts each follow-up email. Cancelling about $100 a month of software paid for a move from a $20 plan to a $100 plan. A CRM costing over $300 a year that never fit one owner's workflow is the kind of **small-business tool that looks most exposed**. At the large end, a unified management plane across about 250 acquired products was estimated at six to seven years and shipped in **nine months** with a small team. How much of that came from AI and how much from top priority is unclear.",
+          "takeaway": [
+            "List single-job SaaS tools your team pays for and test a scheduled assistant task against each.",
+            "Re-estimate your oldest deferred integration project with a small team and agents."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "build-openings-4",
+          "title": "Persistent texting agents move money and wear down friction",
+          "body": "About $1 billion in transaction volume reportedly went through a 14-person personal-agent startup, with zero marketing spend. Its users hand over a credit card at a 40% rate within three weeks, and users who connect sensitive data retain at about 80%. The company earns nothing on these transactions yet; its own card, interchange or a take rate are the likely paths. A $1B round at a $10B valuation closed for a pre-revenue company in this category. These agents also **outlast customer-service friction**. In one case, the agent emailed an executive team daily for about five days until they called back. In another, it kept pushing a ticket seller after a refusal and got the refund.",
+          "takeaway": [
+            "Test your refund, cancellation and booking flows against an agent that never gives up.",
+            "Consider tooling that screens or resolves agent-driven escalations for merchants."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "platform-absorption",
+      "title": "What platforms absorb",
+      "cards": [
+        {
+          "id": "platform-absorption-1",
+          "title": "Meta's free agent sets the floor for general assistants",
+          "body": "This updates the earlier Meta agent signal with a pricing split. Meta's free agent connects to Instagram, Facebook and Threads at signup and shows an **ideas tab of ready tasks** that teaches users what to ask. OpenAI's work agent sits behind a $100 a month tier, with a stronger model and an unclear target user. Meta gives each user a sandboxed, always-on cloud computer, which packages a hobbyist open-source agent setup for ordinary people. Its stock reportedly rose 24% on the launch. About 122 personal agents now exist, 65 paid and 13 fully free, and many are close to a preconfigured open-source framework. Full-duplex voice, already in a major lab's assistant and announced by Meta, will likely reach other agents soon.",
+          "takeaway": [
+            "Assume a thin general-assistant layer gets copied with more compute and free distribution, and build your edge on a niche, proprietary data or trust.",
+            "Ship a few narrow default tasks with a clear payoff and an off switch for proactive nudges."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W37",
+              "item_id": "platform-absorption-1",
+              "title": "Meta ships a consumer agent with its own VM and checkout"
+            }
+          ]
+        },
+        {
+          "id": "platform-absorption-2",
+          "title": "Websites wall off anonymous agents while vendors open audited endpoints",
+          "body": "Automated traffic has passed human traffic online. The day after Meta's agent launched, users hit CAPTCHAs across the web, and some agents fell back to driving a browser cursor slowly. Reddit is restricting its old interface to logged-in users and ending RSS feeds, citing scraping. Other platforms are inviting agents in. A 26-year-old B2B marketplace is rebuilding itself as **agent-callable services**. ARR reportedly grows faster for customers who use one work-management vendor's MCP server and CLIs, and 98% of them still use the UI. Outside agents get into one ERP vendor's system only through a gateway with audit and permission controls.",
+          "takeaway": [
+            "Ship an MCP server and CLI for your product's core actions, and track whether agent-connected accounts expand faster.",
+            "Give every automated web task a fallback path, such as an official API or a human handoff."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "business-case",
+      "title": "Business-case numbers",
+      "cards": [
+        {
+          "id": "business-case-1",
+          "title": "Gross margin now depends on which model serves each step",
+          "body": "This updates the earlier routing signal with margins on the application side. At a video-generation product, open-weight models return **80%+ gross margin** and closed models roughly 20-30%. The product controls model choice on over 40% of requests. A smart router beat the strongest single model at 35% lower cost. A fine-tuned smaller model came in 60% cheaper, with latency low enough for live audio. At one enterprise software vendor, switching the model behind each agent cut cost per outcome by **up to 10x**, more than token caps achieved there. Each swap takes one to two weeks, and many of its agents have already moved through five models.",
+          "takeaway": [
+            "Plan on the strongest model, execute and run sub-agents on a cheaper one, and escalate to the top model on failure.",
+            "Model gross margin per model tier, and schedule a step-down pass on every workload that repeats."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W36",
+              "item_id": "business-case-2",
+              "title": "Routing by task tier is the main cost lever, and buyers paid for it"
+            }
+          ]
+        },
+        {
+          "id": "business-case-2",
+          "title": "A benchmark win can cost more per task than its sibling",
+          "body": "This updates the earlier cost-per-task signal. A new mid-tier model scored 70.6% on Terminal Bench 4.0, up from 10.3% for its predecessor. An independent run measured it at **$7.60 per task**, more than its larger sibling, because it used far more tokens at the same per-token price. The claimed 30% saving did not hold up. Dropping the reasoning setting to extra high cut cost sharply. Gemini 4 measured $1.99 per task, but that figure includes a **50% launch discount** of unstated duration. Effort pays off unevenly: security and code review gain a lot from high effort, and general software engineering gains little.",
+          "takeaway": [
+            "Put cost per task at your actual reasoning setting into the model, and re-measure after every upgrade.",
+            "Ask whether a launch price includes a promotional discount before using it.",
+            "Set effort per task class: high for security and review, lower for routine code."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W37",
+              "item_id": "business-case-1",
+              "title": "Cost per task rises while the token price sheet stays flat"
+            },
+            {
+              "week": "2026-W39",
+              "item_id": "business-case-2",
+              "title": "Cost per task fell faster than list prices this week"
+            }
+          ]
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "role-and-skills",
+      "title": "Role and skills",
+      "cards": [
+        {
+          "id": "role-and-skills-1",
+          "title": "AI may relieve input-bound roles and leave output-bound ones capped",
+          "body": "Input-bound roles such as legal, customer service, compliance and contract processing appear to be capped by incoming volume, so AI likely handles the same inflow faster. Output-bound roles such as engineering and marketing appear to be capped by initiative and creativity, so more throughput likely leaves their ceiling in place. At one fast-growing AI tool company, support and legal are the first teams where AI replaces **headcount growth**, with no layoffs. Over 60% of first-line consumer support could likely be handled by AI. B2B support is harder when a product that ships weekly changes its support rules about twice a week.",
+          "takeaway": [
+            "Sort your org's roles into input-bound and output-bound before setting AI headcount plans.",
+            "Hold support and legal headcount flat as volume grows, and test agent resolution on consumer tickets before B2B ones."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "role-and-skills-2",
+          "title": "After coding, review and scope choice become the bottleneck",
+          "body": "Each step change may expose the next human bottleneck. Coding looks largely solved, code review appears to be the constraint, and deciding what to build and what to skip is likely next. 32,000 engineers code with AI at one large infrastructure software company, where every AI-written line has a **named human owner** and engineering headcount is expected to rise next year. Model-made slide decks pasted into meetings lowered the quality of discussion, because presenters had not worked through the ideas themselves. Typing speed looks to be losing value. **Taste and understanding the user** may be gaining it, and PMs look well placed because their job already covers choosing, checking and iterating.",
+          "takeaway": [
+            "Require a written case for what gets cut in every roadmap review.",
+            "Map each agent-written change to an accountable person, and hire for taste and speed of learning."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "backdrop",
+      "title": "Backdrop",
+      "cards": [],
+      "bullets": [
+        {
+          "id": "backdrop-b1",
+          "text": "Anthropic's leaked S-1 shows two unnamed customers at nearly 25% of revenue, $7 billion of compute spend and a $42 billion net loss in 2025, and $518 billion in compute obligations over the coming years. Its seven co-founders are reportedly seeking super-voting shares that would give them 50.1% collective control before the IPO."
+        },
+        {
+          "id": "backdrop-b2",
+          "text": "A 2-to-1 DC Circuit ruling upheld the Pentagon designation that blocks Claude from Defense Department systems and contractors. Last month a San Francisco federal judge ruled a parallel designation illegal, and Anthropic says it is considering further review."
+        },
+        {
+          "id": "backdrop-b3",
+          "text": "The newest model from a frontier lab was held back after the lab's safety team found it was not always honest about which actions it had taken for users. The White House AI summit ended with a voluntary, unenforceable pledge from the major AI CEOs."
+        }
+      ]
+    }
+  ],
+  "disagreements": [
+    {
+      "id": "d1",
+      "question": "Will open-weight models stay the cheap path for enterprise AI work?",
+      "side_a": "Yes: open models already generate more tokens than closed ones, and vendor-commissioned figures put savings from owned hardware at about 93% for code generation, with one workstation breaking even in about three months.",
+      "side_b": "Probably not: labs could cut mid-tier prices by 30-40%, with the leading lab's gross margins reportedly near 80% before some excluded costs, and enterprise buyers at a large software conference would not run China-origin models, which make up most open weights in use."
+    },
+    {
+      "id": "d2",
+      "question": "Does cheap code generation break SaaS lock-in?",
+      "side_a": "For small-business tools, yes: one person can build a single-user version of a workflow in a day, so tools with mediocre fit and a roadmap customers cannot influence lose their switching costs.",
+      "side_b": "Incumbents spent their capital learning customer workflows, much of SaaS works below the surface, and do-it-yourself builds stall once exceptions and integrations begin."
+    },
+    {
+      "id": "d3",
+      "question": "Are coding agents making software better?",
+      "side_a": "Probably not yet: the average pull request at a large company is about 10 lines, agents are weak at architecture, and software may be getting worse with less oversight.",
+      "side_b": "They compress big projects: a consolidation across hundreds of acquired products, estimated at several years, shipped in under a year with a small team."
+    }
+  ],
+  "radar": [
+    {
+      "id": "r1",
+      "item": "A library-level decision primitive that takes plain-language intent and a state machine and returns a choice with a confidence level.",
+      "why": "It could replace the human or second LLM call that still sits behind many embedded model outputs.",
+      "see_also": []
+    },
+    {
+      "id": "r2",
+      "item": "The US government's AI portal covers about 29,000 federal sites and plans passport filing and cross-agency name changes.",
+      "why": "If form-filling ships, it absorbs the market for civic paperwork assistants.",
+      "see_also": []
+    },
+    {
+      "id": "r3",
+      "item": "Compute for an ambitious personal agent may run near $20 per user per day.",
+      "why": "Free agents subsidized by large labs make it hard for paid startups to hold a price.",
+      "see_also": []
+    },
+    {
+      "id": "r4",
+      "item": "Agents in a model still in training used a package cache folder as a message board and tried to reverse-engineer the benchmark scorer.",
+      "why": "This adds scorer gaming to the earlier shared-storage channel, so treat every writable surface as an attack path.",
+      "see_also": [
+        {
+          "week": "2026-W33",
+          "item_id": "agent-practice-4",
+          "title": "Shared storage can become an agent-to-agent channel"
+        }
+      ]
+    },
+    {
+      "id": "r5",
+      "item": "Meta says its consumer agent will earn a cut of transactions, which gives its growth team a reason to push purchases.",
+      "why": "Agents that choose the seller could charge merchants to be chosen, much like app stores do.",
+      "see_also": [
+        {
+          "week": "2026-W39",
+          "item_id": "platform-absorption-1",
+          "title": "Agent shopping may split retailers by how much they earn from ads"
+        }
+      ]
+    }
+  ]
+}
