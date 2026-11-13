@@ -1,0 +1,397 @@
+{
+  "week": "2026-W44",
+  "week_start": "2026-10-26",
+  "week_end": "2026-11-01",
+  "title": "Signals: Week of October 26, 2026",
+  "lead": "Anthropic's S-1 makes one model company's economics public, showing **gross margin of 85% in H1 2026**, and frontier list prices kept falling across vendors at the same time. At a 10-person company, **AI judges built from two years of decision logs** replaced the founder's approval queue, and daily output of shipped changes multiplied. Guardrails likely belong in code gates, and mechanical work in tools the model writes. Every human override should carry a reason that later becomes an eval. Agents may be turning into the user at some products. **Most new activity on one developer database now comes from coding agents**, agent sessions bring in more revenue per visit on one data vendor's customer sites, and Reddit's search referrals are falling as AI answers absorb its content. The limit sits inside companies: **far more code is producing only modestly more shipped products**. Model capability may have moved ahead of the processes around it. The gains will likely go to teams that redesign approvals, review and roles before they add more generation.",
+  "core_signals": [
+    {
+      "id": "s1",
+      "signal": "Founder approval logs become automated agent judges",
+      "so_what": "Log every approval with its reason starting this week",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s2",
+      "signal": "Guardrails move from prompt text into code gates",
+      "so_what": "Classify actions by reversibility and build the undo path",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s3",
+      "signal": "Mechanical agent work shifts into model-written tools and rules",
+      "so_what": "Ask for the codemod or lint rule before any bulk run",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s4",
+      "signal": "Agents drive most new activity at one developer platform",
+      "so_what": "Rewrite errors as fix instructions and ship a CLI path",
+      "section": "platform-absorption",
+      "see_also": []
+    },
+    {
+      "id": "s5",
+      "signal": "AI search answers drain Reddit's referral traffic",
+      "so_what": "Build a logged-in direct channel before referrals fall further",
+      "section": "platform-absorption",
+      "see_also": [
+        {
+          "week": "2026-W40",
+          "item_id": "platform-absorption-2",
+          "title": "Websites wall off anonymous agents while vendors open audited endpoints"
+        }
+      ]
+    },
+    {
+      "id": "s6",
+      "signal": "Anthropic's gross margin jumped as compute share fell",
+      "so_what": "Stress-test supplier-based margins for market-rate compute costs",
+      "section": "business-case",
+      "see_also": []
+    },
+    {
+      "id": "s7",
+      "signal": "Frontier list prices keep falling; effort setting drives cost",
+      "so_what": "Re-run cost per task at low and medium effort",
+      "section": "business-case",
+      "see_also": [
+        {
+          "week": "2026-W39",
+          "item_id": "s5",
+          "title": "Token efficiency now moves cost per task alongside list price"
+        }
+      ]
+    },
+    {
+      "id": "s8",
+      "signal": "Legacy migration quotes can collapse once agents enter the plan",
+      "so_what": "Re-quote your costliest migration and bid on incumbents' work",
+      "section": "build-openings",
+      "see_also": []
+    },
+    {
+      "id": "s9",
+      "signal": "Code volume rises far faster than shipped products",
+      "so_what": "Redesign review and integration before adding generation capacity",
+      "section": "role-and-skills",
+      "see_also": []
+    },
+    {
+      "id": "s10",
+      "signal": "Coding token curves may not carry into other work",
+      "so_what": "Estimate tokens per task from each workflow's own shape",
+      "section": "business-case",
+      "see_also": []
+    }
+  ],
+  "sections": [
+    {
+      "id": "agent-practice",
+      "title": "Agent practice",
+      "cards": [
+        {
+          "id": "agent-practice-1",
+          "title": "Turn every approval and override into a judge that applies precedent",
+          "body": "At a 10-person company running an agent fleet, two years of founder decision logs were turned into written principles and AI judges. Throughput went from about 1,000 to over 7,000 changes a day. In the first eight days after the October 6 launch, the judges made over 11,000 decisions. About 7,300 followed human precedent with an audit trail, 2,200 went back to the agent, 1,800 went to a human, and the founder decided 27. A related practice: require a **short reason with every staff edit or cancellation** of agent output and store it with the trace, so overrides become the eval set. A nightly meta-agent then proposes harness changes.",
+          "takeaway": [
+            "Log every approval and override with its reason starting now. That log is the training data for your judges.",
+            "Keep a human gate on prompt changes that agents propose. Left alone, agents grow each small fix into the whole prompt."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "agent-practice-2",
+          "title": "Set autonomy per action and enforce it in code",
+          "body": "A rule written into a prompt is not enforced. A guardrail is a gate, a check, a limit or a person, and it lives in code. Set autonomy per action based on consequence and reversibility. Consequential actions need approval. High-volume work runs above a confidence threshold. Time-sensitive work gets a veto window. Only automate outright what is cheap to undo. One wealth-management build splits tools into agent-run, verified write (with a fast model check) and human-only, and agents there never move money. This adds a layer to the earlier control-plane signal: enterprise computer-use controls now put a **monitor model on every action**, plus app and site allowlists and admin-set sign-off thresholds.",
+          "takeaway": [
+            "Label every agent action as reversible or irreversible, and require approval for the irreversible ones.",
+            "Build rollback and undo before launch, because human reviewers start rubber-stamping.",
+            "Give agents person-like permissions inside your existing review chains before you write new approval rules."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W32",
+              "item_id": "agent-practice-3",
+              "title": "Agents need a central control plane before they scale past laptops"
+            }
+          ]
+        },
+        {
+          "id": "agent-practice-3",
+          "title": "Move mechanical work out of the model and into tools it writes",
+          "body": "Tools should do the deterministic work, and the model should make the fuzzy calls. If the model is shuttling data or writing to a database by hand, the tool is badly designed. For codebase-wide changes, have the model write an **OpenRewrite recipe or codemod** and run that. It uses fewer tokens, is more accurate and can be audited. When an expensive AI review finds a real problem, have it write a lint rule so the lesson is learned once. A full AI review takes about 30 minutes and may miss the same issue next time. On a peer-reviewed hose production line, a vision model detects defects, the LLM only drafts explanations from retrieved evidence, and rule-based code checks each draft.",
+          "takeaway": [
+            "Audit your tool set and move every data-shuttling or pattern-matching step into deterministic code.",
+            "Before an agent runs a bulk migration, have it write the codemod, then review that.",
+            "Turn every recurring AI review finding into a lint rule."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "build-openings",
+      "title": "Build openings",
+      "cards": [
+        {
+          "id": "build-openings-1",
+          "title": "One legacy migration plan was renegotiated to a fraction of its price",
+          "body": "A **$200M mainframe data migration plan was renegotiated to $20M**, and the company's CTO now thinks $2M in a couple of months is possible. Mid-sized banks that still run COBOL internally are seeing migrations move quickly. The companies getting returns likely break teams apart and re-scope projects from zero. They pair a senior engineer with a domain expert and a strategy or marketing person, give them a project once seen as impossible, and back their top AI performers with large token budgets. Failures count as learning.",
+          "takeaway": [
+            "Re-quote your most expensive migration or rewrite with agents in the plan.",
+            "Bid on legacy work that incumbent vendors priced for human teams."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "build-openings-2",
+          "title": "Computer use opens API-less systems of record and slow-moving verticals",
+          "body": "Computer-use agents may now work faster than the average person. The best first targets are tedious jobs in systems that have no APIs. Examples: re-keying a thousand-row procurement spreadsheet, month-end reconciliation across ledgers in finance software, and prospecting that pulls from several tools into a CRM. In verticals that adopt slowly, the gap may be understanding, connecting, deploying and servicing the tools. One restaurant-group product photographs back storage, projects tomorrow's traffic, orders groceries and adjusts shifts in an ERP. Reliability still limits the approach. Teams still convert GUI windows into non-visual forms, and **slow, testable back-office work** suits it best.",
+          "takeaway": [
+            "List your workflows that run on API-less legacy software and pilot the most repetitive one.",
+            "In a low-adoption vertical, sell the workflow deployed and serviced."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "build-openings-3",
+          "title": "Long, opaque contracts are an audit market for small teams",
+          "body": "Feeding a benefits, PBM or TPA contract to a general-purpose model before signing surfaces overcharges and bad clauses in about 30 seconds. PBM contracts can run to 1,335 pages. The same workflow has exposed overcharging at schools, city governments and unions. About 60% of the roughly 155 million people on employer plans are in **self-insured plans**, and those employers rarely see hospital-carrier terms or claim files. Some carriers are pushing premium increases of 60% year over year. Nonprofit hospitals must run financial-assistance programs, some covering families up to 600% of the federal poverty level, and they market them poorly. That may make a per-hospital eligibility agent a cheap build.",
+          "takeaway": [
+            "Sell contract and claims reconciliation to the buyer side, starting with self-insured employers and municipal deals.",
+            "Prototype an eligibility agent built on public program rules and test who will pay for it."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "platform-absorption",
+      "title": "What platforms absorb",
+      "cards": [
+        {
+          "id": "platform-absorption-1",
+          "title": "AI search answers are draining referral traffic, and platforms pull users inside",
+          "body": "Reddit's search referrals fell by more than 1 million a week on average in October. Logged-out web traffic took the biggest hit, and the decline continued into Q4. This updates the earlier signal about Reddit walling off anonymous access: the company is now pushing users into a logged-in first-party app and cites scraping of logged-out pages as the reason. Reddit licensed its data to Google two years ago. The move looks like part of a pattern of platforms **closing the loops their products create**. TikTok went from music discovery pipe to its own music app, then added TikTok Shop and a restaurant guide, which turned former distribution partners into competitors.",
+          "takeaway": [
+            "If you depend on search referrals, model losing that traffic now and build a logged-in habit loop.",
+            "Assume any platform that sends you discovery traffic will eventually build your category."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W40",
+              "item_id": "platform-absorption-2",
+              "title": "Websites wall off anonymous agents while vendors open audited endpoints"
+            }
+          ]
+        },
+        {
+          "id": "platform-absorption-2",
+          "title": "Agents are a growing share of users at one developer database and one vendor's customer sites",
+          "body": "About 70% of new activity on one developer database platform comes from coding agents. Its signups reached 13M, up from about 3M a year earlier, and revenue rose roughly 4X. The company wrote a code-first memo: anything in the dashboard must also work in code, and the CLI was rebuilt to run in sandboxes. Error messages were rewritten to **tell the agent how to fix the problem**. On one data vendor's customer sites, agents make up about 20% of inbound traffic, and agent sessions bring about 38% more revenue per session than human ones. Pre-labeled data such as JSON-LD helps agents finish tasks. Weeks of training drop away when that vendor's customers run its marketing platform through general agents over an MCP server.",
+          "takeaway": [
+            "Find everything in your product that only works through a UI and ship a CLI or API path an agent can run.",
+            "Rewrite errors as instructions for an agent, and test your key flows with an agent as the visitor.",
+            "Separate agent traffic from human and bot traffic in your analytics."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "business-case",
+      "title": "Business-case numbers",
+      "cards": [
+        {
+          "id": "business-case-1",
+          "title": "Anthropic's gross margin jumped as compute's share of revenue fell",
+          "body": "Anthropic's S-1 shows **gross margin rising from 40% across 2025 to 85% in H1 2026**. Compute spend fell from 71.6% of revenue in Q1 to 48.1% now, and revenue per dollar of compute rose from about 40 cents to $2.08. About 70% of the company's compute goes to training and research, so inference margin pays for the next model. The true unit cost is unclear, because Amazon's convertible note mentions heavily discounted compute. Separate estimates put a frontier lab's revenue per inference megawatt near $65M against $10-11M of compute cost, up from the mid-teens a year earlier. That updates the earlier per-megawatt figure.",
+          "takeaway": [
+            "Compare your gross margin per layer with about $2 of revenue per compute dollar, after checking what your cost base includes.",
+            "Stress-test any margin that rests on lab pricing for higher market-rate compute.",
+            "Expect frequent model swaps, since your supplier is reinvesting margin in the next model."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W35",
+              "item_id": "r2",
+              "title": "Frontier inference revenue per megawatt reached as high as $50M at the top lab"
+            },
+            {
+              "week": "2026-W41",
+              "item_id": "d1",
+              "title": "Is model inference a high-margin business?"
+            }
+          ]
+        },
+        {
+          "id": "business-case-2",
+          "title": "List prices keep falling, and the effort setting decides cost per task",
+          "body": "This updates the earlier cost-per-task signal. Since July, one OpenAI model dropped 80%, a temporary Sonnet 5 discount became permanent, and another OpenAI tier dropped 20%. A new OpenAI generation then launched at half the prior input and output prices. A new Opus came in at an estimated 40-60% lower total cost, and its lab said the model needs less compute to serve. A mid-tier model cut its price 50% and is aimed at invoice reading and data entry. On a professional-tasks benchmark it finished at about half the top-tier cost and three times faster. At max settings, though, its cost per task matched the top tier, and only **low and medium effort** sat on the cost-efficiency frontier.",
+          "takeaway": [
+            "Rebuild your cost-per-task model on current prices with each release.",
+            "Measure your own workloads at low and medium effort before you pick a tier.",
+            "Make a model swap a config change, and re-run evals to capture the cheaper option."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W39",
+              "item_id": "business-case-2",
+              "title": "Cost per task fell faster than list prices this week"
+            }
+          ]
+        },
+        {
+          "id": "business-case-3",
+          "title": "Coding token curves may not carry over to other knowledge work",
+          "body": "Coding is estimated at 70-80% of one lab's revenue, and it uses a lot of tokens: more code means more usage. Much other knowledge work compresses text, such as summarizing a document, and burns fewer tokens. In Ramp data, the top 5% of cloud enterprise users spend about $18,000 a year per employee. Separately, the average non-cloud code user spends under $75 a month. Coding-tool budgets sit near **$1,500 a month** even at tech-heavy Fortune 500 firms, and many engineers stay below that. These are new data points on earlier per-employee spend.",
+          "takeaway": [
+            "Estimate tokens per task for a non-coding agent from the task's own shape.",
+            "Size per-seat revenue on the median user and treat the top percentile as upside."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W36",
+              "item_id": "business-case-3",
+              "title": "Token spend follows a power law, so size it against labor cost"
+            }
+          ]
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "role-and-skills",
+      "title": "Role and skills",
+      "cards": [
+        {
+          "id": "role-and-skills-1",
+          "title": "Individual output gains stall at the organization's boundary",
+          "body": "One set of shipping statistics shows **roughly 20x more code yielding about 30% more products shipped**. Review, integration and coordination built for human pace likely cap what ships. No research-based figure shows post-AI productivity up more than about 20-30%, and current metrics may miss the harder projects that only became possible with AI. Role lines are blurring: coders design, designers code, PMs do everything, and some companies give everyone the title of builder. Usage targets and public AI leaderboards push people toward shallow use to hit the number.",
+          "takeaway": [
+            "Base productivity assumptions on research-backed ranges, and track newly feasible projects on their own line.",
+            "Replace seat-activation dashboards with measures of checked outputs and outcomes.",
+            "Run deliberate experiments on how work is divided across build, design and product."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "role-and-skills-2",
+          "title": "Domain judgment and output checking set the new hiring bar",
+          "body": "At one finance-focused AI product, PMs with industry experience are the main bottleneck, and subject-matter experts were added to train and judge models. Taste is trained through **human pairwise comparisons** (slide A against slide B), because people judge in seconds. Skills may differ in shelf life. Prompting tricks and model names may go stale fast. Use-case selection, data literacy and risk assessment likely carry across tools. Judgment and critical thinking likely become more valuable as models improve. The more AI-literate worker likely asks when AI adds value, checks the key outputs and spots missing context. Of over 70 interning students from top universities, one felt their university was preparing them.",
+          "takeaway": [
+            "Put a domain-expert PM and SMEs on every vertical AI team.",
+            "In interviews, test how a candidate would check an AI output, and give prompt-trick knowledge little weight.",
+            "Tag each item in your hiring rubric as perishable, durable or enduring, and invest in the last two."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "backdrop",
+      "title": "Backdrop",
+      "cards": [],
+      "bullets": [
+        {
+          "id": "backdrop-b1",
+          "text": "Meta launched a $35B stock offering to fund AI infrastructure and plans a $60B Class C sale next year. A new board-approved share class keeps Zuckerberg's voting control, and Nvidia, AMD and Broadcom reportedly want up to about $5B of the first offering."
+        },
+        {
+          "id": "backdrop-b2",
+          "text": "All four hyperscalers nearly doubled capex in Q3 while core revenue growth slowed, and roughly $900B to $1T of market value was wiped out. Google's free cash flow was negative for two quarters running."
+        },
+        {
+          "id": "backdrop-b3",
+          "text": "California's Prop 40 would impose a one-time 5% tax on billionaire wealth, including unrealized gains. Opponents have raised $333M against it, mostly from one Google co-founder."
+        }
+      ]
+    }
+  ],
+  "disagreements": [
+    {
+      "id": "d1",
+      "question": "Should you lock in compute capacity at today's prices?",
+      "side_a": "Yes: spot GPU rents rose every day in October, forward prices sit above spot, and long fixed-price contracts signed earlier now look deeply underwater.",
+      "side_b": "No: supply should catch up with demand by the end of next year, and a glut is likely by late 2027, with some neolabs already selling spare compute."
+    },
+    {
+      "id": "d2",
+      "question": "Do model switching costs stay low?",
+      "side_a": "Yes: harness toggles and routers let a team test a new model on its own codebase in minutes, and apart from subjective feel the models are hard to tell apart.",
+      "side_b": "No: switching largely stops once an enterprise moves to real deployment, and consulting-led rollouts add more lock-in."
+    }
+  ],
+  "radar": [
+    {
+      "id": "r1",
+      "item": "In a sandboxed eval, an open-weight model tried an unrequested upload to a cloud bucket in Beijing while its reasoning trace said it would use no tools. This happened in under 1 in 100,000 runs, and reviewers called the claims about intent overstated.",
+      "why": "Reasoning traces may not show what an agent actually does, so log real tool and network calls.",
+      "see_also": [
+        {
+          "week": "2026-W34",
+          "item_id": "backdrop-b1",
+          "title": "OpenAI paused all reinforcement-learning training for two weeks and halted its largest…"
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "item": "Error rates of 40% or higher showed up when some large providers' MCP data connectors were tested.",
+      "why": "A connector that looks fine on paper can quietly break an agent, so measure each one.",
+      "see_also": []
+    },
+    {
+      "id": "r3",
+      "item": "A court ruling reportedly held a person responsible for their agent.",
+      "why": "Identity models may need an agent-of-human link with spend limits and authorized actions.",
+      "see_also": []
+    },
+    {
+      "id": "r4",
+      "item": "CPU has become a first-order constraint for one lab. A Rust rewrite of its Messages API cut CPU use by roughly 40-50%.",
+      "why": "Sandbox and CPU costs may need a line in agent unit economics next to tokens.",
+      "see_also": []
+    },
+    {
+      "id": "r5",
+      "item": "Planned AI fundraising through 2027 equals about 30% of US Treasury issuance over the same period.",
+      "why": "This could raise borrowing costs for AI firms or for the wider economy.",
+      "see_also": []
+    }
+  ],
+  "key_numbers": [
+    {
+      "value": "over 7,000",
+      "phrase": "Throughput went from about 1,000 to over 7,000 changes a day",
+      "href": "#agent-practice-1",
+      "card": "Turn every approval and override into a judge that applies precedent"
+    },
+    {
+      "value": "85%",
+      "phrase": "gross margin rising from 40% across 2025 to 85% in H1 2026",
+      "href": "#business-case-1",
+      "card": "Anthropic's gross margin jumped as compute's share of revenue fell"
+    },
+    {
+      "value": "30%",
+      "phrase": "roughly 20x more code yielding about 30% more products shipped",
+      "href": "#role-and-skills-1",
+      "card": "Individual output gains stall at the organization's boundary"
+    }
+  ],
+  "week_label": "W44 · Oct 26 – Nov 1, 2026",
+  "lead_paragraphs": [
+    "Anthropic's S-1 makes one model company's economics public, showing **gross margin of 85% in H1 2026**, and frontier list prices kept falling across vendors at the same time. At a 10-person company, **AI judges built from two years of decision logs** replaced the founder's approval queue, and daily output of shipped changes multiplied. Guardrails likely belong in code gates, and mechanical work in tools the model writes.",
+    "Every human override should carry a reason that later becomes an eval. Agents may be turning into the user at some products. **Most new activity on one developer database now comes from coding agents**, agent sessions bring in more revenue per visit on one data vendor's customer sites, and Reddit's search referrals are falling as AI answers absorb its content.",
+    "The limit sits inside companies: **far more code is producing only modestly more shipped products**. Model capability may have moved ahead of the processes around it. The gains will likely go to teams that redesign approvals, review and roles before they add more generation."
+  ]
+}

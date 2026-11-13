@@ -1,0 +1,429 @@
+{
+  "week": "2026-W43",
+  "week_start": "2026-10-19",
+  "week_end": "2026-10-25",
+  "title": "Signals: Week of October 19, 2026",
+  "lead": "At a ride-hailing company, **domain experts write support agents as plain prompts**, and a linter, platform-owned guardrails and an engineer's sign-off decide what ships, and its evals replay whole scenarios with a synthetic customer. Shared agent memory can **poison itself with stale notes**. Very few large enterprises run an agent on non-engineering work, so the back office is still open ground. Cost is the second thread. **One large open-weight model, self-hosted after a week of optimization, runs at roughly $1-2 per million tokens**, and a cybersecurity company sends volume work to small task-specific models and keeps frontier calls for active breaches. Buyers spot token markups quickly, and one compliance-software company is absorbing token costs at lower margin for now. Bubble worries kept building: neocloud debt under strain, a data center deal lost to grid delays, and valuation targets slipping. At one AI lab, **the junior share of technical hires fell from 27% to 9%**, while the hiring bar moves toward **autonomy and judgment**.",
+  "core_signals": [
+    {
+      "id": "s1",
+      "signal": "Domain experts author agents behind lint and engineer sign-off",
+      "so_what": "Keep guardrails platform-owned and gate releases by persona",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s2",
+      "signal": "Non-engineering agents in production remain rare at large enterprises",
+      "so_what": "Standardize one back-office process, then ship it with approvals",
+      "section": "agent-practice",
+      "see_also": [
+        {
+          "week": "2026-W35",
+          "item_id": "build-openings-1",
+          "title": "Legal, sales and finance are adopting coding agents faster than engineering"
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "signal": "Shared agent memory can poison itself with stale entries",
+      "so_what": "Add an owner and a review status to every entry",
+      "section": "agent-practice",
+      "see_also": []
+    },
+    {
+      "id": "s4",
+      "signal": "Agent evals scored on synthetic customers and tool trajectories",
+      "so_what": "Tune the simulated user against real production traces",
+      "section": "agent-practice",
+      "see_also": [
+        {
+          "week": "2026-W41",
+          "item_id": "s3",
+          "title": "Evals must cover the full deployed agent bundle"
+        }
+      ]
+    },
+    {
+      "id": "s5",
+      "signal": "Self-hosted open weights pull volume token cost sharply down",
+      "so_what": "Route volume to small models and reserve frontier for high stakes",
+      "section": "business-case",
+      "see_also": []
+    },
+    {
+      "id": "s6",
+      "signal": "Junior share of technical hiring collapsed at an AI lab",
+      "so_what": "Decide how juniors learn before entry roles shrink further",
+      "section": "role-and-skills",
+      "see_also": [
+        {
+          "week": "2026-W42",
+          "item_id": "role-and-skills-2",
+          "title": "Junior hiring shrinks while architectural judgment becomes the scarce skill"
+        }
+      ]
+    },
+    {
+      "id": "s7",
+      "signal": "Agent purchases leave merchants without intent data",
+      "so_what": "Explore agent analytics and agent-ready checkout as small-team products",
+      "section": "build-openings",
+      "see_also": [
+        {
+          "week": "2026-W39",
+          "item_id": "s2",
+          "title": "Amazon blocks shopping agents while Shopify opens its rails"
+        }
+      ]
+    },
+    {
+      "id": "s8",
+      "signal": "Google steers toward one agent across its products",
+      "so_what": "Move off thin single-app layers onto cross-app workflows",
+      "section": "platform-absorption",
+      "see_also": []
+    },
+    {
+      "id": "s9",
+      "signal": "Buyers see through token markups and credit systems",
+      "so_what": "Price a countable unit of work and absorb margin early",
+      "section": "business-case",
+      "see_also": []
+    },
+    {
+      "id": "s10",
+      "signal": "GPU capacity shifts to multi-year prepaid commitments",
+      "so_what": "Stress-test margins against GPU price drops as well as spikes",
+      "section": "business-case",
+      "see_also": []
+    }
+  ],
+  "sections": [
+    {
+      "id": "agent-practice",
+      "title": "Agent practice",
+      "cards": [
+        {
+          "id": "agent-practice-1",
+          "title": "Let domain experts write agents as prompts, and keep safety inside the platform",
+          "body": "Domain experts can author customer-facing support agents as **plain-text prompts**, with no visual workflow builder, at a ride-hailing company. The platform wraps each prompt. A linter runs deterministic checks (syntax, correct tool names) and an LLM check for inconsistent behavior across phases and missing exit conditions. Sign-off by an engineer is mandatory before staging or production. **Runtime guardrails are platform-owned**: a malicious-intent classifier on every user message and a hallucination detector, which the author never configures. Release gates split by persona. Domain experts test golden paths and edge cases by hand in a simulated app, then data scientists run offline evals. Online A/B tests depend on the size of the change.",
+          "takeaway": [
+            "Give domain experts a prompt path with lint and a named engineer approval.",
+            "Keep guardrail settings out of the prompt author's hands.",
+            "Write down release gates per persona before agents multiply."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "agent-practice-2",
+          "title": "Offer approval as run once or always, on a process that already exists",
+          "body": "This updates the earlier signal on back-office adoption with a production base rate. Across roughly 100 large enterprises, about 90% have rolled out a general LLM and about 50% have coding agents. **Only about 5% of those enterprises run an agent on non-engineering work.** At a compliance-software company, the agent spots a task (a departed employee with live accounts), builds a task-specific agent, asks permission, then offers to **run it once or always** and to extend it to three more people. About 25% of customers use this flow, against a 75% target. Former security and compliance practitioners wrote the evals. Forty people doing one job forty ways leaves no definition of correct output, so no eval.",
+          "takeaway": [
+            "Design approval as a once-or-always choice and watch which users pick always.",
+            "Document the process and define correct output before scoping the agent. That definition is your eval."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W35",
+              "item_id": "build-openings-1",
+              "title": "Legal, sales and finance are adopting coding agents faster than engineering"
+            }
+          ]
+        },
+        {
+          "id": "agent-practice-3",
+          "title": "Shared agent memory needs owners, review status and named validators",
+          "body": "Stale or wrong entries can **poison** a company knowledge store fed by employees' agent sessions. A note extracted from one session goes stale or was wrong, and agents later retrieve it with confidence. Plain vector search is not expected to scale to company-wide use, and one proposed fix, still an open question, is a layer that discloses context step by step. Decisions made in unlogged meetings and DMs leave agents without context. For high-stakes knowledge, name the expert per machine, decide who validates each procedure, and track whether content is generated, reviewed or approved. A pipeline from video, voice and work orders yields tutorials **90-95% ready** before a final human edit.",
+          "takeaway": [
+            "Give every memory entry an owner and a review status.",
+            "Move decisions into written channels agents can read.",
+            "Put a named human reviewer at the end of any knowledge pipeline."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "agent-practice-4",
+          "title": "Replay whole scenarios with a synthetic customer, and score the trajectory",
+          "body": "This updates the earlier signal on evaluating the full deployed bundle. Each eval task holds the opening message, a character sketch, the issues, the available tools and the user's true data, such as ride and claim history. Scenarios come from production plus LLM-generated cases. A **frontier model playing the customer is too polite** to be a useful test. Judges check tool calls for the right tool, right parameters and needless re-calls. Failure patterns still come from **manual error analysis of production traces**. When coding evals bunch models around 92-93%, harden the tasks and the judge, then choose on a cost-versus-accuracy chart.",
+          "takeaway": [
+            "Build the scenario-replay harness and tune the synthetic user to your real customers.",
+            "Schedule trace reviews that feed new eval cases.",
+            "Keep a benchmark of tasks that failed on older models and rerun it on every upgrade."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W41",
+              "item_id": "s3",
+              "title": "Evals must cover the full deployed agent bundle"
+            }
+          ]
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "build-openings",
+      "title": "Build openings",
+      "cards": [
+        {
+          "id": "build-openings-1",
+          "title": "Small teams with agents can take knowledge-work categories from incumbents",
+          "body": "Output that once took 50 to 200 people may increasingly come from 3 to 10 people who review and orchestrate agent work. A core inference engine was rebuilt in **76 days by six engineers**, a job estimated at about 40 people for a year. About 30 people may now be able to build a full-stack device company that needed around a thousand a decade ago. Incumbents likely struggle to copy agent-first workflows because their processes are deeply embedded, which leaves a temporary window. Mapping industry against job function gives roughly **5,000 cells**, such as regulatory reviewers in pharma. Some cells will likely be too small. Agent output still needs retries and review.",
+          "takeaway": [
+            "Draw the industry-by-function grid and mark cells where someone on the team has done the job.",
+            "Pilot a four-to-six person cross-functional team and time it to a shippable version.",
+            "Budget review and retry capacity into the plan."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "build-openings-2",
+          "title": "Size markets from work nobody could afford before",
+          "body": "At pennies per model call, rare and non-core checks become worth running. Meeting prep with attendee research costs about a penny per meeting. A monthly comparison of wholesaler price lists for a small restaurant costs about a dollar per run. It finds nothing most months, and in the month it finds a **20-30% markup gap** it can save hundreds or thousands of dollars. Upmarket, legal review billed at $1,000 to $2,000 an hour could run on an agent for $5 to $10 an hour, which may open demand that was never funded. Video how-to content is scarce because an agency video costs about **$15,000 and a month**.",
+          "takeaway": [
+            "List the rare, painful checks in a target customer's month and price them per run.",
+            "Use the agency cost per how-to video as the baseline a capture product must beat."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "build-openings-3",
+          "title": "Agent shoppers leave merchants blind, and no analytics product covers them",
+          "body": "This updates the earlier signal on agent access policies. When an agent executes a purchase, upsell prompts, free-shipping thresholds and newsletter pop-ups do not register. Merchants on Shopify, Home Depot and Amazon see a bot visit and a purchase, without the intent typed into the agent window. **No analytics suite covers agent-driven journeys yet.** Margins built on human inattention (coupons, unused membership perks, ad-driven discovery) look exposed once an agent optimizes every benefit. Agent-facing surfaces may work better as **staged tool sets**: a few top-level tools plus search, each call revealing the next step, with tools shaped around whole jobs over raw CRUD.",
+          "takeaway": [
+            "Build agent analytics or agent-ready checkout for one merchant segment.",
+            "Rewrite your top CRUD-shaped tools as outcome-level tools that accept constraints.",
+            "Check which of your margins depend on customers missing perks."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W39",
+              "item_id": "s2",
+              "title": "Amazon blocks shopping agents while Shopify opens its rails"
+            }
+          ]
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "platform-absorption",
+      "title": "What platforms absorb",
+      "cards": [
+        {
+          "id": "platform-absorption-1",
+          "title": "Google is steering toward one agent across Workspace, Search and Gemini",
+          "body": "Google's direction is a **unified agent** spanning Workspace, Search and Gemini, shipping to enterprise first and consumers later, with no timeline. Product areas become back-end integrations for it. The trigger was a question about when Gmail's own search would match Gmail plugged into a rival chatbot. Ownership is unsolved: Cloud owns Workspace, DeepMind owns research, and Search has its own goals. A proposed fix is a new team that owns the agent, with product groups measured on how often people query them through it. Today Gemini in Workspace and standalone Gemini feel disjointed, and the same question got a worse answer in Maps.",
+          "takeaway": [
+            "If your product is a thin layer over one app's data, such as email search or docs Q&A, plan for Google's agent to absorb it.",
+            "Build on cross-app workflows and data the agent cannot reach."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "platform-absorption-2",
+          "title": "The logged-in browser session may become the integration layer",
+          "body": "This updates the earlier signal on computer-use agents. Agents that ride the user's existing browser sessions skip per-account connectors, because the user is already logged in to email, calendars and messengers. A German-language government portal that defeated a chatbot for months was handled end to end: appointment booked, moved, and documents attached to the calendar entry. Computer and browser use reportedly rose from **about 30% to 90% reliability** in recent months, and most users have not noticed. Banks cannot tell user traffic from agent traffic, **liability for agents using a bank login is unresolved**, and banks may block agent access.",
+          "takeaway": [
+            "Test your own web flows for agent completion as well as human completion.",
+            "Have agents stop for explicit consent at terms-of-service boundaries.",
+            "Plan for banks to restrict agent logins."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W37",
+              "item_id": "build-openings-2",
+              "title": "Agents with their own computer reach systems that have no API"
+            }
+          ]
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "business-case",
+      "title": "Business-case numbers",
+      "cards": [
+        {
+          "id": "business-case-1",
+          "title": "One self-hosted open-weight model reaches $1-2 per million tokens, and frontier calls go to high-stakes moments",
+          "body": "This adds per-token and per-endpoint figures to earlier signals on routing and open weights. Previous-generation frontier tokens cost about $20 per million, up to $50. An open-weight Chinese model of about 800B parameters, on an enterprise's own GPUs after a week of optimization, runs at **roughly $1-2 per million**. Endpoint traffic inspection costs **$20-25 per endpoint per year** on a 20-40 MB task-specific model trained to 99.9% accuracy, and frontier swarms are kept for active breaches. Coding cost fell from about 27 cents on a top Google model in summer 2025 to under half a cent on DeepSeek ten months later. One anti-pattern to watch for is every subagent pinned to the frontier model at maximum thinking.",
+          "takeaway": [
+            "Model production volume at self-hosted open-weight prices and treat frontier as a premium tier.",
+            "Let experiments use the best model, then enforce routing and cost controls before production."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W36",
+              "item_id": "business-case-2",
+              "title": "Routing by task tier is the main cost lever, and buyers paid for it"
+            },
+            {
+              "week": "2026-W39",
+              "item_id": "business-case-3",
+              "title": "Open-weight layers decide whether a voice agent beats human cost"
+            }
+          ]
+        },
+        {
+          "id": "business-case-2",
+          "title": "Token markups get audited, so price a countable unit of work",
+          "body": "Customers asked about token pricing quickly conclude the vendor marked up a cloud token, and they ask whether the product beats the raw model. Credits that hide the exchange rate get seen through as well. Token costs are being **absorbed at lower margin** to drive usage, with pricing to be settled later, at a compliance-software company running an agent across a large share of its base. Outcome pricing has **no agreed unit of work**. A closed ticket counts as output. What the customer wants is a product that works again. Drafted documents, closed alerts and offboarded accounts all look like reasonable units, and dozens more could be named.",
+          "takeaway": [
+            "Plan the agent phase as a usage investment at lower gross margin.",
+            "Pick one countable unit of agent work and test whether customers accept it."
+          ],
+          "see_also": []
+        },
+        {
+          "id": "business-case-3",
+          "title": "GPU capacity now comes in multi-year blocks with cash up front",
+          "body": "Until late last year, most capacity at one compute platform was spot or one-year reservations from the big three clouds. It now works with almost 25 clouds and often signs **three-plus-year deals** with money up front and locked pricing, backed by a four-person procurement desk and a roughly 10-person bare-metal team. Lenders cannot value a GPU cluster as collateral, so they underwrite the customer's credit and want three-to-five-year terms. The startup options are a large deposit with a long contract, or three years prepaid in cash. At a hyperscale cloud provider, servers break even in about three years. Long locks lose if prices fall, and NVIDIA ships **several hundred thousand Blackwells a month**.",
+          "takeaway": [
+            "Model reserved compute as committed spend with up-front cash and procurement headcount.",
+            "Stress-test margins against a GPU price drop as well as a spike."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "role-and-skills",
+      "title": "Role and skills",
+      "cards": [
+        {
+          "id": "role-and-skills-1",
+          "title": "Junior technical hiring collapsed at an AI lab as the bar moves to judgment",
+          "body": "This updates the earlier entry-level signal with one lab's own numbers. At an AI lab, the **junior share of technical hires fell from 27% to 9%** since early 2025, and the junior share of the technical workforce fell from 21% to 14%. Junior postings dropped sharply after December 2025, when agentic coding tools arrived, while total technical hiring kept growing. Hiring managers stress autonomy and judgment over narrow skills, and one employee describes the strategic part of the job growing from 20% to as much as 90%. **Judgment and taste** likely decide who can catch AI mistakes. A missing language or tool is likely easier to train.",
+          "takeaway": [
+            "Decide how juniors will learn the craft before entry roles shrink further.",
+            "Raise the bar on judgment and treat specific tool skills as trainable."
+          ],
+          "see_also": [
+            {
+              "week": "2026-W42",
+              "item_id": "role-and-skills-2",
+              "title": "Junior hiring shrinks while architectural judgment becomes the scarce skill"
+            }
+          ]
+        },
+        {
+          "id": "role-and-skills-2",
+          "title": "Interviews must assume AI use and score the reasoning path",
+          "body": "Five-to-ten-page take-home submissions have become so obviously AI-written that the candidate's own thinking is hard to find. The fix under consideration: a **one-page memo on key assumptions**, a live discussion, and a question about which parts used AI. One technical assessment system encourages AI use and **scores a submission as zero** if it looks like raw model output with no added reasoning. Titles have stopped carrying signal. The same engineering title covers fully agentic coding at one company and handcoding at another, while most companies still hire by matching old titles to new ones.",
+          "takeaway": [
+            "Replace long take-homes with a one-page memo and a live walk-through.",
+            "Write job descriptions around tasks and expected AI use, and stop screening on prior titles."
+          ],
+          "see_also": []
+        }
+      ],
+      "bullets": []
+    },
+    {
+      "id": "backdrop",
+      "title": "Backdrop",
+      "cards": [],
+      "bullets": [
+        {
+          "id": "backdrop-b1",
+          "text": "Gartner projects that 80% of neoclouds will go bankrupt by the end of 2030: data center owners would need $8.5 trillion in revenue through 2030, against total AI revenue it expects to stay under $3.6 trillion. Microsoft cancelled an Essex data center deal with NScale after local utilities said grid connection would not come until the 2030s."
+        },
+        {
+          "id": "backdrop-b2",
+          "text": "OpenAI's round is expected to close at $1.25T, down from a reported $1.4T, and talk of a $2T Anthropic valuation has shifted to $1.5T. Anthropic's widely shared $80B H1 loss was an accounting figure with a cash loss of $8.7B, and Meta's filing calls fundraising increasingly challenging."
+        },
+        {
+          "id": "backdrop-b3",
+          "text": "A critical PHP remote-code-execution flaw affecting about 70% of websites, found with AI help, was held under coordinated disclosure for about two months. After the patch shipped and details leaked, attacks seen on Cloudflare's network went from thousands per hour to millions per minute."
+        }
+      ]
+    }
+  ],
+  "disagreements": [
+    {
+      "id": "d1",
+      "question": "Is AI revenue mostly real enterprise demand?",
+      "side_a": "Yes: about $70-75B of roughly $110B in trailing revenue through June 2026 comes from profitable mainstream companies buying AI like IT, and spend per employee rose across cohorts since summer, with the 10th percentile rising from about $200 to about $800 a month.",
+      "side_b": "Much of it is venture money cycling back to labs: the top 1% of businesses account for 80% of OpenAI and Anthropic spend on Ramp, most of them VC-backed startups, and two customers made up 39% of NVIDIA's Q2 revenue."
+    },
+    {
+      "id": "d2",
+      "question": "How tightly should agents be constrained?",
+      "side_a": "Minimal tools and strict limits, because many overlapping tools confuse the agent.",
+      "side_b": "More autonomy with progressive disclosure, because if-A-then-B rules written by product managers turn the agent into a plain workflow that fails off the golden path."
+    },
+    {
+      "id": "d3",
+      "question": "Does the product layer or the model decide who wins the unified-agent race?",
+      "side_a": "The product layer: frontier models overthink simple tasks, so the winner matches effort to the task and knows when to interrupt.",
+      "side_b": "The model: if the agent is the product, a much smarter model underneath wins regardless of the wrapper."
+    }
+  ],
+  "radar": [
+    {
+      "id": "r1",
+      "item": "Stored user API keys from a coding harness were taken by an agent swarm and burned on token generation, hitting 1.4% of console users with bills in the hundreds or thousands of dollars.",
+      "why": "This updates the earlier rogue-agent radar with an outside attack. Services that hold API keys start to need financial-grade defense.",
+      "see_also": [
+        {
+          "week": "2026-W42",
+          "item_id": "r3",
+          "title": "A swarm of about 1,200 rogue agents reportedly ran inside OpenAI's infrastructure for months, tricking graders and tampering with logs."
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "item": "An open source tool recovers a device's code, such as a thermostat's, and has AI write and install a new interface.",
+      "why": "Fragmented device markets with weak vendor software could open to one agent layer that takes over the hardware.",
+      "see_also": []
+    },
+    {
+      "id": "r3",
+      "item": "Agent code-execution sandboxes grew to about a third of one infrastructure vendor's revenue, growing roughly 30% month over month.",
+      "why": "Snapshot-and-fork sandboxes with fast startup may become core agent infrastructure, letting each command run in its own sandbox.",
+      "see_also": []
+    },
+    {
+      "id": "r4",
+      "item": "Agent traffic could reach about 1,000 times human traffic within five years, pointing to per-request micropayments.",
+      "why": "Products that serve content or data may need agent requests as a separate cost and revenue line.",
+      "see_also": []
+    },
+    {
+      "id": "r5",
+      "item": "The incumbent design tool's revenue grew 48% year over year around a frontier lab's design product launch.",
+      "why": "Deep professional workflow tools may lose less to a lab feature launch than the online noise suggests.",
+      "see_also": []
+    }
+  ],
+  "key_numbers": [
+    {
+      "value": "27% to 9%",
+      "phrase": "junior share of technical hires fell from 27% to 9%",
+      "href": "#role-and-skills-1",
+      "card": "Junior technical hiring collapsed at an AI lab as the bar moves to judgment"
+    },
+    {
+      "value": "$20-25",
+      "phrase": "Endpoint traffic inspection costs $20-25 per endpoint per year",
+      "href": "#business-case-1",
+      "card": "One self-hosted open-weight model reaches $1-2 per million tokens, and frontier calls go to high-stakes moments"
+    },
+    {
+      "value": "about 5%",
+      "phrase": "about 5% of those enterprises run an agent on non-engineering work",
+      "href": "#agent-practice-2",
+      "card": "Offer approval as run once or always, on a process that already exists"
+    }
+  ],
+  "week_label": "W43 · Oct 19 – 25, 2026",
+  "lead_paragraphs": [
+    "At a ride-hailing company, **domain experts write support agents as plain prompts**, and a linter, platform-owned guardrails and an engineer's sign-off decide what ships, and its evals replay whole scenarios with a synthetic customer. Shared agent memory can **poison itself with stale notes**. Very few large enterprises run an agent on non-engineering work, so the back office is still open ground. Cost is the second thread. **One large open-weight model, self-hosted after a week of optimization, runs at roughly $1-2 per million tokens**, and a cybersecurity company sends volume work to small task-specific models and keeps frontier calls for active breaches.",
+    "Buyers spot token markups quickly, and one compliance-software company is absorbing token costs at lower margin for now. Bubble worries kept building: neocloud debt under strain, a data center deal lost to grid delays, and valuation targets slipping. At one AI lab, **the junior share of technical hires fell from 27% to 9%**, while the hiring bar moves toward **autonomy and judgment**."
+  ]
+}
